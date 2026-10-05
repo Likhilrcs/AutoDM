@@ -11,7 +11,7 @@ from app.core.errors import (
     generic_error_handler,
 )
 from app.utils.logger import logger
-from app.api.routes import users, automations, auth, dashboard, social_accounts, executions, settings as settings_route
+from app.api.routes import users, automations, auth, dashboard, social_accounts, executions, settings as settings_route, webhooks
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -82,6 +82,7 @@ def create_app() -> FastAPI:
     app.include_router(social_accounts.router, prefix="/api/v1")
     app.include_router(executions.router, prefix="/api/v1")
     app.include_router(settings_route.router, prefix="/api/v1")
+    app.include_router(webhooks.router, prefix="/api/v1")
 
     return app
 

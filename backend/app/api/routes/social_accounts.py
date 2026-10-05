@@ -1,7 +1,8 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, Request, Query
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 
 from app.api.deps import get_current_user
@@ -13,6 +14,7 @@ from app.utils.logger import logger
 from app.utils.text import normalize
 from app.repositories.event_repository import event_repo
 from app.agents.graph import run_for_event
+from app.services.instagram_service import instagram_service
 
 router = APIRouter(prefix="/social", tags=["Social Accounts"])
 
@@ -29,7 +31,7 @@ class SocialAccountResponse(BaseModel):
     created_at: Optional[datetime] = None
 
 class ConnectAccountRequest(BaseModel):
-    platform: str = "mock"
+    platform: str = "instagram" # "instagram" or "mock"
 
 class ConnectAccountResponse(BaseModel):
     account: Optional[SocialAccountResponse] = None
@@ -42,16 +44,16 @@ class PostItem(BaseModel):
     permalink: Optional[str] = None
     caption: Optional[str] = None
     media_type: Optional[str] = "REEL"
-    comments_count: Optional[int] = 34
-    likes_count: Optional[int] = 482
+    comments_count: Optional[int] = 42
+    likes_count: Optional[int] = 512
     active_automation: Optional[str] = None
     posted_at: Optional[datetime] = None
 
 class SimulateCommentRequest(BaseModel):
     social_account_id: Optional[str] = None
     external_post_id: Optional[str] = None
-    commenter_username: str = "creator.fan"
-    comment_text: str = "Send me the link please!"
+    commenter_username: str = "customer_alex"
+    comment_text: str = "PRICE"
 
 class SimulateCommentResponse(BaseModel):
     success: bool
@@ -61,6 +63,42 @@ class SimulateCommentResponse(BaseModel):
     execution_id: Optional[str] = None
     status: str
     message: str
+
+class CallbackRequest(BaseModel):
+    code: str
+    state: Optional[str] = None
+
+def get_default_seed_posts(user_id: str, account_id: str) -> List[dict]:
+    """Realistic Instagram posts matching user requirements."""
+    return [
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "social_account_id": account_id,
+            "external_post_id": "post_product_launch",
+            "permalink": "https://www.instagram.com/reel/DEMO123/",
+            "caption": "Product Launch: Our new automated CRM is officially live! Comment 'PRICE' or 'LAUNCH' to unlock early-bird discount 🔥",
+            "media_type": "REEL"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "social_account_id": account_id,
+            "external_post_id": "post_new_shoes",
+            "permalink": "https://www.instagram.com/reel/DEMO456/",
+            "caption": "New Shoes: Limited drop! Retro runner sneakers available now. Comment 'PRICE' to receive sizing details and direct checkout link 👟",
+            "media_type": "REEL"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "social_account_id": account_id,
+            "external_post_id": "post_summer_offer",
+            "permalink": "https://www.instagram.com/p/DEMO789/",
+            "caption": "Summer Offer: 40% off sitewide on all accessories! Comment 'PRICE' or 'OFFER' below to grab your private promo code ☀️",
+            "media_type": "CAROUSEL"
+        }
+    ]
 
 @router.get("/accounts", response_model=ApiResponse[List[SocialAccountResponse]])
 async def list_social_accounts(current_user: dict = Depends(get_current_user)):
@@ -80,7 +118,7 @@ async def list_social_accounts(current_user: dict = Depends(get_current_user)):
                 id=row["id"],
                 platform=row["platform"],
                 external_account_id=row["external_account_id"],
-                username=row.get("username") or "creator",
+                username=row.get("username") or "mybusiness",
                 account_type=row.get("account_type") or "MEDIA_CREATOR",
                 status=row.get("status") or "connected",
                 followers_count=24500,
@@ -100,88 +138,181 @@ async def connect_social_account(payload: ConnectAccountRequest, current_user: d
     if not client:
         raise AppError("DATABASE_ERROR", "Database client not available.")
 
-    # MOCK MODE: Instant creation of connected account
-    if settings.MOCK_SOCIAL_API or payload.platform == "mock":
+    # 1. Real Meta OAuth Flow: Generate authorization URL if credentials present or explicitly requested
+    if payload.platform == "instagram" and settings.SOCIAL_CLIENT_ID:
+        auth_url = instagram_service.get_authorization_url(user_id=user_id)
+        return ApiResponse(data=ConnectAccountResponse(
+            authorization_url=auth_url,
+            mock=False
+        ))
+
+    # 2. Instant Mock / Demo Flow: Connect demo account `@mybusiness`
+    account_id = str(uuid.uuid4())
+    account_data = {
+        "id": account_id,
+        "user_id": user_id,
+        "platform": "instagram" if not settings.MOCK_SOCIAL_API else "mock",
+        "external_account_id": f"ig_account_{user_id[:8]}",
+        "username": "mybusiness",
+        "account_type": "MEDIA_CREATOR",
+        "status": "connected",
+        "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+    }
+
+    try:
+        res = client.table("social_accounts").upsert(account_data).execute()
+        created = res.data[0] if res.data else account_data
+
+        # Store token record
+        client.table("social_account_tokens").upsert({
+            "social_account_id": created["id"],
+            "access_token_enc": f"mock_token_{uuid.uuid4().hex[:20]}",
+            "token_type": "long_lived",
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+            "last_refreshed_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+
+        # Seed sample posts for this newly connected account
+        seed_posts = get_default_seed_posts(user_id, created["id"])
+        for p in seed_posts:
+            try:
+                client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
+            except Exception:
+                pass
+
+        return ApiResponse(data=ConnectAccountResponse(
+            account=SocialAccountResponse(
+                id=created["id"],
+                platform=created["platform"],
+                external_account_id=created["external_account_id"],
+                username=created.get("username", "mybusiness"),
+                account_type=created.get("account_type", "MEDIA_CREATOR"),
+                status=created["status"],
+                followers_count=24500,
+                media_count=142
+            ),
+            mock=True
+        ))
+    except Exception as e:
+        logger.error(f"Error creating mock account: {e}")
+        raise AppError("DATABASE_ERROR", f"Failed to connect account: {e}")
+
+@router.get("/callback")
+async def meta_oauth_redirect_callback(
+    code: str = Query(...),
+    state: Optional[str] = Query(None)
+):
+    """
+    Browser redirect endpoint from Meta / Instagram authorization dialog.
+    Receives code & state, exchanges token, and redirects back to frontend dashboard.
+    """
+    logger.info(f"Received Meta OAuth callback. state={state}")
+
+    user_id = None
+    if state and state.startswith("user_"):
+        user_id = state.replace("user_", "")
+
+    client = get_supabase_client()
+    if not client or not user_id:
+        return RedirectResponse(url="http://localhost:5173/dashboard?error=missing_user_state")
+
+    try:
+        # 1. Exchange code for 60-day token
+        token_data = await instagram_service.exchange_code_for_token(code)
+        access_token = token_data.get("access_token")
+
+        # 2. Fetch user profile
+        profile = await instagram_service.get_user_profile(access_token)
+        ig_id = profile.get("id") or token_data.get("user_id")
+        username = profile.get("username", "mybusiness")
+        account_type = profile.get("account_type", "MEDIA_CREATOR")
+
+        # 3. Upsert social_account
         account_id = str(uuid.uuid4())
         account_data = {
             "id": account_id,
             "user_id": user_id,
-            "platform": "mock",
-            "external_account_id": f"mock_ig_{user_id[:8]}",
-            "username": f"{current_user.get('payload', {}).get('user_metadata', {}).get('name', 'maya').lower().replace(' ', '')}.creates",
-            "account_type": "MEDIA_CREATOR",
+            "platform": "instagram",
+            "external_account_id": str(ig_id),
+            "username": username,
+            "account_type": account_type,
             "status": "connected",
+            "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
         }
+        res = client.table("social_accounts").upsert(account_data, on_conflict="platform, external_account_id").execute()
+        saved_account = res.data[0] if res.data else account_data
+        acc_id = saved_account["id"]
 
+        # 4. Save token
+        client.table("social_account_tokens").upsert({
+            "social_account_id": acc_id,
+            "access_token_enc": access_token,
+            "token_type": "long_lived",
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+            "last_refreshed_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+
+        # 5. Sync posts
+        media_list = await instagram_service.get_user_media(access_token)
+        for m in media_list:
+            post_data = {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "social_account_id": acc_id,
+                "external_post_id": str(m["id"]),
+                "permalink": m.get("permalink"),
+                "caption": m.get("caption"),
+                "media_type": m.get("media_type", "REEL"),
+            }
+            try:
+                client.table("posts").upsert(post_data, on_conflict="social_account_id, external_post_id").execute()
+            except Exception:
+                pass
+
+        logger.info(f"Successfully connected Instagram account @{username} via Meta OAuth.")
+        return RedirectResponse(url=f"http://localhost:5173/dashboard?connected=true&username={username}")
+    except Exception as e:
+        logger.error(f"Error handling Meta OAuth callback: {e}")
+        return RedirectResponse(url=f"http://localhost:5173/dashboard?error={str(e)}")
+
+@router.post("/callback", response_model=ApiResponse[dict])
+async def meta_oauth_post_callback(
+    payload: CallbackRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """API endpoint for frontend-handled OAuth callback."""
+    user_id = current_user["id"]
+    client = get_supabase_client()
+    if not client:
+        raise AppError("DATABASE_ERROR", "Database not available.")
+
+    token_data = await instagram_service.exchange_code_for_token(payload.code)
+    access_token = token_data.get("access_token")
+    profile = await instagram_service.get_user_profile(access_token)
+    username = profile.get("username", "mybusiness")
+
+    account_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "platform": "instagram",
+        "external_account_id": str(profile.get("id")),
+        "username": username,
+        "account_type": profile.get("account_type", "MEDIA_CREATOR"),
+        "status": "connected",
+        "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+    }
+    res = client.table("social_accounts").upsert(account_data, on_conflict="platform, external_account_id").execute()
+    saved = res.data[0] if res.data else account_data
+
+    # Seed sample posts
+    seed_posts = get_default_seed_posts(user_id, saved["id"])
+    for p in seed_posts:
         try:
-            res = client.table("social_accounts").upsert(account_data).execute()
-            created = res.data[0] if res.data else account_data
+            client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
+        except Exception:
+            pass
 
-            # Seed sample posts for this newly connected account
-            seed_posts = [
-                {
-                    "id": str(uuid.uuid4()),
-                    "user_id": user_id,
-                    "social_account_id": created["id"],
-                    "external_post_id": f"post_reel_notion_{user_id[:6]}",
-                    "permalink": "https://instagram.com/reel/C1x89yZ",
-                    "caption": "10x your client onboarding in Notion. Comment 'NOTION' and I'll DM you my exact template for free 🚀",
-                    "media_type": "REEL"
-                },
-                {
-                    "id": str(uuid.uuid4()),
-                    "user_id": user_id,
-                    "social_account_id": created["id"],
-                    "external_post_id": f"post_reel_blueprint_{user_id[:6]}",
-                    "permalink": "https://instagram.com/reel/C2a90wX",
-                    "caption": "Stop losing leads in the DMs! Comment 'GUIDE' for my automated Instagram growth blueprint 📲",
-                    "media_type": "REEL"
-                },
-                {
-                    "id": str(uuid.uuid4()),
-                    "user_id": user_id,
-                    "social_account_id": created["id"],
-                    "external_post_id": f"post_carousel_ai_{user_id[:6]}",
-                    "permalink": "https://instagram.com/p/C3m41kV",
-                    "caption": "Top 5 AI Tools that replaced my 40-hr agency team in 2026. Comment 'TOOLS' to grab the list 👇",
-                    "media_type": "CAROUSEL"
-                }
-            ]
-            for p in seed_posts:
-                try:
-                    client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
-                except Exception:
-                    pass
-
-            return ApiResponse(data=ConnectAccountResponse(
-                account=SocialAccountResponse(
-                    id=created["id"],
-                    platform=created["platform"],
-                    external_account_id=created["external_account_id"],
-                    username=created.get("username"),
-                    account_type=created.get("account_type"),
-                    status=created["status"],
-                    followers_count=24500,
-                    media_count=142
-                ),
-                mock=True
-            ))
-        except Exception as e:
-            logger.error(f"Error creating mock account: {e}")
-            raise AppError("DATABASE_ERROR", f"Failed to connect account: {e}")
-
-    # Production mode: Generate Meta OAuth authorization URL
-    auth_url = (
-        f"https://www.instagram.com/oauth/authorize?"
-        f"client_id={settings.SOCIAL_CLIENT_ID}&"
-        f"redirect_uri={settings.SOCIAL_REDIRECT_URI}&"
-        f"scope=instagram_business_basic,instagram_business_manage_comments,instagram_business_manage_messages&"
-        f"response_type=code&state=user_{user_id}"
-    )
-    return ApiResponse(data=ConnectAccountResponse(
-        authorization_url=auth_url,
-        mock=False
-    ))
+    return ApiResponse(data={"connected": True, "username": username})
 
 @router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def disconnect_account(account_id: str, current_user: dict = Depends(get_current_user)):
@@ -218,6 +349,14 @@ async def sync_account(account_id: str, current_user: dict = Depends(get_current
             "updated_at": datetime.now(timezone.utc).isoformat()
         }).eq("id", account_id).eq("user_id", user_id).execute()
 
+        # Seed or refresh posts
+        seed_posts = get_default_seed_posts(user_id, account_id)
+        for p in seed_posts:
+            try:
+                client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
+            except Exception:
+                pass
+
         return ApiResponse(data={"synced": True, "message": "Account media and tokens successfully re-synced."})
     except Exception as e:
         logger.error(f"Error syncing account: {e}")
@@ -232,10 +371,13 @@ async def get_account_posts(account_id: str, current_user: dict = Depends(get_cu
 
     try:
         # Check active automations for mapping
-        auto_res = client.table("automations").select("id, name, target_post_id, automation_triggers(keyword)").eq("user_id", user_id).is_("deleted_at", "null").execute()
+        auto_res = client.table("automations").select(
+            "id, name, external_post_id, automation_triggers(keyword)"
+        ).eq("user_id", user_id).is_("deleted_at", "null").execute()
+
         active_triggers_by_post = {}
         for a in (auto_res.data or []):
-            p_id = a.get("target_post_id")
+            p_id = a.get("external_post_id")
             trgs = a.get("automation_triggers") or []
             kw = trgs[0].get("keyword") if trgs and isinstance(trgs, list) else None
             if p_id and kw:
@@ -246,35 +388,7 @@ async def get_account_posts(account_id: str, current_user: dict = Depends(get_cu
 
         # If empty, generate seed posts so creator has immediate posts to test
         if not rows:
-            seed_posts = [
-                {
-                    "id": str(uuid.uuid4()),
-                    "user_id": user_id,
-                    "social_account_id": account_id,
-                    "external_post_id": f"post_reel_notion_{user_id[:6]}",
-                    "permalink": "https://instagram.com/reel/C1x89yZ",
-                    "caption": "10x your client onboarding in Notion. Comment 'NOTION' and I'll DM you my exact template for free 🚀",
-                    "media_type": "REEL"
-                },
-                {
-                    "id": str(uuid.uuid4()),
-                    "user_id": user_id,
-                    "social_account_id": account_id,
-                    "external_post_id": f"post_reel_blueprint_{user_id[:6]}",
-                    "permalink": "https://instagram.com/reel/C2a90wX",
-                    "caption": "Stop losing leads in the DMs! Comment 'GUIDE' for my automated Instagram growth blueprint 📲",
-                    "media_type": "REEL"
-                },
-                {
-                    "id": str(uuid.uuid4()),
-                    "user_id": user_id,
-                    "social_account_id": account_id,
-                    "external_post_id": f"post_carousel_ai_{user_id[:6]}",
-                    "permalink": "https://instagram.com/p/C3m41kV",
-                    "caption": "Top 5 AI Tools that replaced my 40-hr agency team in 2026. Comment 'TOOLS' to grab the list 👇",
-                    "media_type": "CAROUSEL"
-                }
-            ]
+            seed_posts = get_default_seed_posts(user_id, account_id)
             for p in seed_posts:
                 try:
                     client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
@@ -323,10 +437,10 @@ async def simulate_comment(
         if acc_res.data and len(acc_res.data) > 0:
             social_account_id = acc_res.data[0]["id"]
         else:
-            raise AppError("ACCOUNT_NOT_FOUND", "Please connect a social account before simulating comments.")
+            raise AppError("ACCOUNT_NOT_FOUND", "Please connect an Instagram account first.")
 
     # 2. Resolve Post ID
-    external_post_id = payload.external_post_id or f"post_reel_notion_{user_id[:6]}"
+    external_post_id = payload.external_post_id or "post_new_shoes"
     comment_id = f"mock_cmt_{uuid.uuid4().hex[:8]}"
     commenter_id = f"user_{hash(payload.commenter_username) % 1000000}"
     normalized_comment = normalize(payload.comment_text)
@@ -368,7 +482,7 @@ async def simulate_comment(
     elif outcome == "duplicate":
         msg = "Comment ignored: duplicate within cooldown window."
     elif outcome == "no_match":
-        msg = f"No active automation trigger matched '{payload.comment_text}'."
+        msg = f"No active automation trigger matched '{payload.comment_text}' on post {external_post_id}."
     elif outcome == "skipped":
         msg = "AI intent gate rejected this comment."
     elif outcome == "ignored":

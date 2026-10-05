@@ -70,4 +70,9 @@ export const socialApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  handleCallback: (code: string, state?: string) =>
+    apiClient<{ connected: boolean; username: string }>('/social/callback', {
+      method: 'POST',
+      body: JSON.stringify({ code, state }),
+    }),
 };

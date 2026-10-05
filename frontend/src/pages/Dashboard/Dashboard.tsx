@@ -46,21 +46,40 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Banner & Action CTAs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-card">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              Welcome back, {user?.user_metadata?.name || 'Creator'} 👋
-            </h2>
-            <Badge variant="mock">Mock Demo Active</Badge>
+      {/* Instagram Account Connection Status Card (User Flow) */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-sm shrink-0">
+            <Instagram className="w-6 h-6" />
           </div>
-          <p className="text-xs text-slate-500">
-            Real-time comment-to-DM state machine and engagement overview.
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Instagram Account
+              </span>
+              {summary?.connected_account && summary.connected_account.status === 'connected' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                  ❌ Not connected
+                </span>
+              )}
+            </div>
+            <h3 className="text-base font-extrabold text-slate-900 mt-0.5">
+              {summary?.connected_account && summary.connected_account.status === 'connected'
+                ? `@${summary.connected_account.username || 'mybusiness'}`
+                : 'No account linked yet'}
+            </h3>
+            <p className="text-[11px] text-slate-500">
+              Welcome, {user?.user_metadata?.name || 'Creator'} · Live comment-to-DM automation status
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 self-end sm:self-auto">
           <Button
             variant="outline"
             onClick={() => setIsSimulatorOpen(true)}
@@ -68,11 +87,20 @@ export const Dashboard: React.FC = () => {
           >
             Simulate Comment
           </Button>
-          <Link to="/automations/new">
-            <Button icon={<Plus className="w-4 h-4" />}>
-              New Automation
-            </Button>
-          </Link>
+
+          {summary?.connected_account && summary.connected_account.status === 'connected' ? (
+            <Link to="/automations/new">
+              <Button icon={<Zap className="w-4 h-4 fill-yellow-400 text-yellow-400" />}>
+                Create AutoDM
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/social-accounts">
+              <Button icon={<Instagram className="w-4 h-4" />}>
+                Connect Instagram
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

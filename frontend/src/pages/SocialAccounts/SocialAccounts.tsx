@@ -107,13 +107,23 @@ export const SocialAccounts: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          onClick={() => connectMutation.mutate('mock')}
-          loading={connectMutation.isPending}
-          icon={<Plus className="w-4 h-4" />}
-        >
-          Connect Account
-        </Button>
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            onClick={() => connectMutation.mutate('mock')}
+            loading={connectMutation.isPending}
+            icon={<Sparkles className="w-4 h-4 text-indigo-600" />}
+          >
+            Demo Connect (@mybusiness)
+          </Button>
+          <Button
+            onClick={() => connectMutation.mutate('instagram')}
+            loading={connectMutation.isPending}
+            icon={<Instagram className="w-4 h-4" />}
+          >
+            Connect with Meta
+          </Button>
+        </div>
       </div>
 
       {/* Mock Mode Notice Banner (PRD §31) */}

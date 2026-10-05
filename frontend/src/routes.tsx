@@ -10,6 +10,7 @@ import { AutomationDetails } from '@/pages/AutomationDetails/AutomationDetails';
 import { Activity } from '@/pages/Activity/Activity';
 import { SocialAccounts } from '@/pages/SocialAccounts/SocialAccounts';
 import { Settings } from '@/pages/Settings/Settings';
+import { OAuthCallback } from '@/pages/OAuthCallback/OAuthCallback';
 import { AppLayout } from '@/layouts/AppLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
@@ -64,6 +65,14 @@ export const router = createBrowserRouter([
       {
         path: '/settings',
         element: <Settings />,
+      },
+      {
+        path: '/dashboard/instagram/callback',
+        element: <OAuthCallback />,
+      },
+      {
+        path: '/social-accounts/callback',
+        element: <OAuthCallback />,
       },
     ],
   },
