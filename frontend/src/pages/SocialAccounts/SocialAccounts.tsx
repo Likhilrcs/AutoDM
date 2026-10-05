@@ -15,12 +15,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   Unlink,
-  ShieldCheck,
   RefreshCw,
   Plus,
   Sparkles,
-  Copy,
-  Check,
   Video,
   Layers,
   MessageCircle,
@@ -30,7 +27,6 @@ export const SocialAccounts: React.FC = () => {
   const queryClient = useQueryClient();
   const [disconnectTargetId, setDisconnectTargetId] = useState<string | null>(null);
   const [simulatorPostId, setSimulatorPostId] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const { data: accounts, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['social-accounts'],
@@ -85,16 +81,6 @@ export const SocialAccounts: React.FC = () => {
       toast.error(err.message || 'Failed to disconnect account.');
     },
   });
-
-  const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    toast.success(`${field} copied to clipboard!`);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
-
-  const webhookUrl = 'http://localhost:8000/api/v1/webhooks/instagram';
-  const verifyToken = 'autodm_meta_verify_secret_token';
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -328,67 +314,6 @@ export const SocialAccounts: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Meta Webhook & Integration Credentials Slide */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Meta Webhook Integration Details</CardTitle>
-          <CardDescription>
-            Configure these credentials in your Meta App Dashboard under WhatsApp & Instagram Graph API Webhooks.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">
-                Callback URL
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={webhookUrl}
-                  className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 select-all"
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyToClipboard(webhookUrl, 'Webhook URL')}
-                  icon={copiedField === 'Webhook URL' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">
-                Verify Token
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={verifyToken}
-                  className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 select-all"
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyToClipboard(verifyToken, 'Verify Token')}
-                  icon={copiedField === 'Verify Token' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-            <span className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>HMAC-SHA256 signature verification active on all incoming payloads</span>
-            </span>
-            <span className="font-semibold text-indigo-600">SHA256 Valid</span>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Disconnect Confirmation Modal */}
       <ConfirmDialog
