@@ -83,7 +83,7 @@ async def get_settings(current_user: dict = Depends(get_current_user)):
         except Exception as e:
             logger.warning(f"Failed to fetch profile settings: {e}")
 
-    api_url = "http://localhost:8000" if settings.APP_ENV == "development" else "https://api.autodm.dev"
+    api_url = "https://recliner-filter-luxurious.ngrok-free.dev"
 
     full_settings = FullSettingsResponse(
         profile=ProfileSettings(

@@ -56,9 +56,9 @@ Complete reference for setting up Meta's Instagram OAuth flow with AutoDM.
 1. In the sidebar under **Facebook Login for Business** $\to$ **Settings**:
 2. Find **Valid OAuth Redirect URIs**.
 3. Add your backend callback URL:
-   * **Development:**
+   * **Your Active Ngrok URL:**
      ```text
-     http://localhost:8000/api/v1/social/callback
+     https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback
      ```
    * **Production:**
      ```text
@@ -74,18 +74,18 @@ Complete reference for setting up Meta's Instagram OAuth flow with AutoDM.
 
 ---
 
-## 3. Environment Variables (`backend/.env`)
+## 3. Environment Variables (`backend/.ENV`)
 
-Add these keys to your `backend/.env` file:
+Your `backend/.ENV` is configured as:
 
 ```env
 # Meta / Instagram OAuth Credentials
-SOCIAL_CLIENT_ID=your_meta_app_id_here
-SOCIAL_CLIENT_SECRET=your_meta_app_secret_here
-SOCIAL_REDIRECT_URI=http://localhost:8000/api/v1/social/callback
+SOCIAL_CLIENT_ID=1865064594103092
+SOCIAL_CLIENT_SECRET=05f54725fa65e877ed91022939be6892
+SOCIAL_REDIRECT_URI=https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback
 
-# Switch to False when testing real Meta OAuth (Keep True for Instant Demo Mock)
-MOCK_SOCIAL_API=False
+# Set to False to run live Meta OAuth flow
+MOCK_SOCIAL_API=false
 ```
 
 ---
@@ -94,7 +94,7 @@ MOCK_SOCIAL_API=False
 
 ### Endpoint 1: Initiate OAuth Connection
 * **Frontend Request:**
-  `POST http://localhost:8000/api/v1/social/connect`
+  `POST https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/connect`
   ```json
   { "platform": "instagram" }
   ```
@@ -103,7 +103,7 @@ MOCK_SOCIAL_API=False
   {
     "success": true,
     "data": {
-      "authorization_url": "https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id={SOCIAL_CLIENT_ID}&redirect_uri=http://localhost:8000/api/v1/social/callback&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments&state=user_{user_id}",
+      "authorization_url": "https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id={SOCIAL_CLIENT_ID}&redirect_uri=https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments&state=user_{user_id}",
       "mock": false
     }
   }
@@ -117,10 +117,10 @@ MOCK_SOCIAL_API=False
 ### Endpoint 2: Instagram OAuth Authorization Dialog
 * **Meta URL:** `https://www.instagram.com/oauth/authorize`
 * **Query Parameters:**
-  | Parameter | Description | Example |
+  | Parameter | Description | Value |
   | :--- | :--- | :--- |
-  | `client_id` | Your Meta App ID | `123456789012345` |
-  | `redirect_uri` | Callback URL registered in Meta | `http://localhost:8000/api/v1/social/callback` |
+  | `client_id` | Your Meta App ID | `1865064594103092` |
+  | `redirect_uri` | Callback URL registered in Meta | `https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback` |
   | `response_type` | Always `code` | `code` |
   | `scope` | Required permissions | `instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments` |
   | `state` | Current user ID to prevent CSRF | `user_b94d27b9-934d-4bc...` |
@@ -128,7 +128,7 @@ MOCK_SOCIAL_API=False
 ---
 
 ### Endpoint 3: FastAPI Callback Handler
-* **URL:** `GET http://localhost:8000/api/v1/social/callback?code={CODE}&state={STATE}`
+* **URL:** `GET https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback?code={CODE}&state={STATE}`
 * **FastAPI Actions:**
   1. **Exchange Code for Short-Lived Access Token:**
      * `POST https://api.instagram.com/oauth/access_token`

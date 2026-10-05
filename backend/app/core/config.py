@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     SECRET_KEY: str = "change-me-to-a-secure-random-32-byte-string"
     TOKEN_ENCRYPTION_KEY: str = ""
-    CORS_ORIGINS: str = "http://localhost:5173"
+    CORS_ORIGINS: str = "http://localhost:5173,https://recliner-filter-luxurious.ngrok-free.dev,http://127.0.0.1:5173"
+    API_BASE_URL: str = "https://recliner-filter-luxurious.ngrok-free.dev"
 
     # --- Supabase ---
     SUPABASE_URL: str = ""
@@ -29,10 +30,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
 
     # --- Social Platform (Instagram) ---
-    MOCK_SOCIAL_API: bool = True
+    MOCK_SOCIAL_API: bool = False
     SOCIAL_CLIENT_ID: str = ""
     SOCIAL_CLIENT_SECRET: str = ""
-    SOCIAL_REDIRECT_URI: str = "http://localhost:8000/api/v1/social/callback"
+    SOCIAL_REDIRECT_URI: str = "https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback"
     WEBHOOK_VERIFY_TOKEN: str = "autodm_webhook_verify_token_secret"
     GRAPH_API_VERSION: str = "v21.0"
 

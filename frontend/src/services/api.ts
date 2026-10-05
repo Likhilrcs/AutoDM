@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://recliner-filter-luxurious.ngrok-free.dev/api/v1';
 
 export interface ApiError {
   code: string;
@@ -34,6 +34,7 @@ export async function apiClient<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
     ...(options.headers as Record<string, string> || {}),
   };
 

@@ -454,7 +454,7 @@ export const Settings: React.FC = () => {
                 <input
                   type="text"
                   readOnly
-                  value={settings?.webhook?.endpoint_url || 'http://localhost:8000/api/v1/webhooks/instagram'}
+                  value={settings?.webhook?.endpoint_url || 'https://recliner-filter-luxurious.ngrok-free.dev/api/v1/webhooks/instagram'}
                   className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 select-all"
                 />
                 <Button
@@ -462,7 +462,7 @@ export const Settings: React.FC = () => {
                   variant="outline"
                   onClick={() =>
                     copyToClipboard(
-                      settings?.webhook?.endpoint_url || 'http://localhost:8000/api/v1/webhooks/instagram',
+                      settings?.webhook?.endpoint_url || 'https://recliner-filter-luxurious.ngrok-free.dev/api/v1/webhooks/instagram',
                       'Webhook URL'
                     )
                   }

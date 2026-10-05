@@ -47,13 +47,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+    const apiBase = import.meta.env.VITE_API_URL || 'https://recliner-filter-luxurious.ngrok-free.dev/api/v1';
 
     try {
       // 1. Try reliable server-side signup via Admin API (bypasses instance signup restrictions & email rate limits)
       const res = await fetch(`${apiBase}/auth/signup`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
         body: JSON.stringify({ email, password, name }),
       });
 
