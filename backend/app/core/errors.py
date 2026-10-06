@@ -112,13 +112,22 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
         field = ".".join([str(loc) for loc in err["loc"] if loc != "body"])
         field_errors[field] = err["msg"]
 
+    detail_str = "; ".join([f"{f}: {m}" for f, m in field_errors.items()]) if field_errors else ""
+    error_message = f"Invalid parameters: {detail_str}" if detail_str else "Invalid request parameters."
+
+    try:
+        from app.utils.logger import logger
+        logger.warning(f"Validation error on {request.method} {request.url.path}: {field_errors}")
+    except Exception:
+        pass
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "success": False,
             "error": {
                 "code": "VALIDATION_ERROR",
-                "message": "Invalid request parameters.",
+                "message": error_message,
                 "details": field_errors,
                 "request_id": request_id,
             },

@@ -7,9 +7,12 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, name?: string) => Promise<{ error: any; needVerification?: boolean }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: any }>;
+  resendOtp: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,33 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const apiBase = import.meta.env.VITE_API_URL || 'https://recliner-filter-luxurious.ngrok-free.dev/api/v1';
-
-    try {
-      // 1. Try reliable server-side signup via Admin API (bypasses instance signup restrictions & email rate limits)
-      const res = await fetch(`${apiBase}/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-        },
-        body: JSON.stringify({ email, password, name }),
-      });
-
-      if (res.ok) {
-        // Automatically sign in the freshly created & confirmed user
-        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-        return { error: signInErr };
-      }
-
-      const body = await res.json();
-      if (body?.error?.message) {
-        return { error: new Error(body.error.message) as any };
-      }
-    } catch (e) {
-      // Fallback to client-side Supabase if server unreachable
-    }
-
+    // Call Supabase signUp which registers the account and triggers email OTP
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -82,6 +59,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: name || '',
         },
       },
+    });
+
+    if (error) {
+      return { error, needVerification: false };
+    }
+
+    return { error: null, needVerification: true };
+  };
+
+  const verifyOtp = async (email: string, token: string) => {
+    let { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: token.trim(),
+      type: 'signup',
+    });
+
+    if (error) {
+      // Fallback retry with type 'email'
+      const retry = await supabase.auth.verifyOtp({
+        email,
+        token: token.trim(),
+        type: 'email',
+      });
+      if (!retry.error) {
+        error = null;
+        data = retry.data;
+      }
+    }
+
+    if (data?.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    }
+
+    return { error };
+  };
+
+  const resendOtp = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
     });
     return { error };
   };
@@ -99,6 +117,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+    return { error };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -107,8 +139,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         signIn,
         signUp,
+        verifyOtp,
+        resendOtp,
         signOut,
         resetPassword,
+        signInWithGoogle,
       }}
     >
       {children}

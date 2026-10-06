@@ -50,10 +50,15 @@ export interface SimulateCommentResponse {
 
 export const socialApi = {
   listAccounts: () => apiClient<SocialAccount[]>('/social/accounts'),
-  connect: (platform: string = 'mock') =>
+  connect: (platform: string = 'instagram') =>
     apiClient<ConnectResponse>('/social/connect', {
       method: 'POST',
       body: JSON.stringify({ platform }),
+    }),
+  connectWithToken: (accessToken: string) =>
+    apiClient<SocialAccount>('/social/connect-token', {
+      method: 'POST',
+      body: JSON.stringify({ access_token: accessToken }),
     }),
   disconnect: (id: string) =>
     apiClient<void>(`/social/accounts/${id}`, {

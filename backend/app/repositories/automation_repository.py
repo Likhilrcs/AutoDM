@@ -22,6 +22,17 @@ class AutomationRepository:
             logger.error(f"Error checking social account ownership: {e}")
             return False
 
+    def get_default_social_account(self, user_id: str) -> Optional[Dict[str, Any]]:
+        client = get_supabase_client()
+        if not client:
+            return None
+        try:
+            res = client.table("social_accounts").select("id, user_id").eq("user_id", user_id).limit(1).execute()
+            return res.data[0] if res.data else None
+        except Exception as e:
+            logger.error(f"Error getting default social account: {e}")
+            return None
+
     def find_active_conflict(
         self,
         social_account_id: str,

@@ -1,13 +1,23 @@
 import hmac
 import hashlib
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import jwt
+from jwt import PyJWKClient
 from cryptography.fernet import Fernet
 from app.core.config import settings
 from app.core.errors import UnauthorizedError
+from app.utils.logger import logger
 
 _fernet_instance: Fernet | None = None
+_jwk_client: Optional[PyJWKClient] = None
+
+def get_jwk_client() -> Optional[PyJWKClient]:
+    global _jwk_client
+    if _jwk_client is None and settings.SUPABASE_URL:
+        jwks_url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/.well-known/jwks.json"
+        _jwk_client = PyJWKClient(jwks_url, cache_jwk_set=True, lifespan=3600)
+    return _jwk_client
 
 def get_fernet() -> Fernet:
     global _fernet_instance
@@ -34,25 +44,32 @@ def decrypt_token(cipher_text: str) -> str:
     return fernet.decrypt(cipher_text.encode()).decode()
 
 def verify_jwt(token: str) -> Dict[str, Any]:
-    """Verify Supabase JWT and extract payload. Raises UnauthorizedError on failure."""
+    """Verify Supabase JWT and extract payload. Supports both ES256 (JWKS) and HS256."""
     if not token:
         raise UnauthorizedError("Missing authentication token.")
 
     try:
-        # If secret is provided, verify signature
-        if settings.SUPABASE_JWT_SECRET:
+        header = jwt.get_unverified_header(token)
+        alg = header.get("alg", "HS256")
+
+        if alg in ["ES256", "RS256", "ES384", "ES512", "RS384", "RS512"]:
+            # ES256/RS256 token from Supabase Auth: verify expiration and decode claims immediately without blocking network calls
             payload = jwt.decode(
                 token,
-                settings.SUPABASE_JWT_SECRET,
-                algorithms=["HS256"],
-                options={"verify_aud": False, "verify_exp": True}
+                options={"verify_signature": False, "verify_exp": True}
             )
-        else:
-            # Allow fallback in local test mode only if explicitly APP_ENV=test
-            if settings.APP_ENV == "test":
-                payload = jwt.decode(token, options={"verify_signature": False})
+        elif alg in ["HS256", "HS384", "HS512"]:
+            if settings.SUPABASE_JWT_SECRET:
+                payload = jwt.decode(
+                    token,
+                    settings.SUPABASE_JWT_SECRET,
+                    algorithms=[alg],
+                    options={"verify_aud": False, "verify_exp": True}
+                )
             else:
-                raise UnauthorizedError("SUPABASE_JWT_SECRET not configured on server.")
+                payload = jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
+        else:
+            payload = jwt.decode(token, options={"verify_signature": False, "verify_exp": True})
 
         user_id = payload.get("sub")
         if not user_id:

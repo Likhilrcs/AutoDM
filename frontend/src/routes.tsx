@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { Landing } from '@/pages/Landing/Landing';
 import { Login } from '@/pages/Login/Login';
 import { Signup } from '@/pages/Signup/Signup';
+import { VerifyOtp } from '@/pages/VerifyOtp/VerifyOtp';
 import { ResetPassword } from '@/pages/ResetPassword/ResetPassword';
 import { Dashboard } from '@/pages/Dashboard/Dashboard';
 import { Automations } from '@/pages/Automations/Automations';
@@ -26,6 +27,10 @@ export const router = createBrowserRouter([
   {
     path: '/signup',
     element: <Signup />,
+  },
+  {
+    path: '/verify-otp',
+    element: <VerifyOtp />,
   },
   {
     path: '/reset-password',

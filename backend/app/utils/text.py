@@ -20,7 +20,15 @@ def matches(comment: str, keyword: str, mode: str = "contains", case_sensitive: 
     Compare comment against trigger keyword.
     mode: 'exact' requires full normalized equality.
     mode: 'contains' requires whole-word boundary match inside sentence.
+    keyword '*' matches any comment.
     """
+    if not comment:
+        return False
+
+    k_raw = (keyword or "").strip()
+    if k_raw == "*":
+        return True
+
     c = normalize(comment, case_sensitive)
     k = normalize(keyword, case_sensitive)
 

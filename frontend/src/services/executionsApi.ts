@@ -29,6 +29,28 @@ export interface ExecutionDetail extends ExecutionItem {
   incoming_events?: any;
 }
 
+export interface ExecutionStats {
+  total_executions: number;
+  success_count: number;
+  failed_count: number;
+  pending_count: number;
+  total_events: number;
+  success_rate: number;
+}
+
+export interface IncomingEventItem {
+  id: string;
+  event_type: string;
+  commenter_username: string;
+  commenter_id?: string;
+  comment_text: string;
+  external_post_id?: string;
+  account_username?: string;
+  created_at?: string;
+  matched_execution_id?: string;
+  execution_status?: string;
+}
+
 export const executionsApi = {
   list: (status?: string, automationId?: string, page = 1, pageSize = 20) => {
     const params = new URLSearchParams({
@@ -39,6 +61,16 @@ export const executionsApi = {
     if (automationId) params.append('automation_id', automationId);
 
     return apiClient<ExecutionItem[]>(`/executions?${params.toString()}`);
+  },
+
+  getStats: () => apiClient<ExecutionStats>('/executions/stats'),
+
+  listEvents: (page = 1, pageSize = 20) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    });
+    return apiClient<IncomingEventItem[]>(`/executions/events?${params.toString()}`);
   },
 
   getDetail: (id: string) => apiClient<ExecutionDetail>(`/executions/${id}`),

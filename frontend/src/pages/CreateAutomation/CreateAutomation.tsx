@@ -44,7 +44,7 @@ export const CreateAutomation: React.FC = () => {
 
   // Form State
   const [socialAccountId, setSocialAccountId] = useState('');
-  const [name, setName] = useState('');
+  const [name, setName] = useState('Instagram AutoDM');
   const [selectedPostId, setSelectedPostId] = useState<string>('post_new_shoes');
   const [externalPostId, setExternalPostId] = useState('post_new_shoes');
   const [postUrl, setPostUrl] = useState('https://www.instagram.com/reel/DEMO456/');
@@ -75,7 +75,7 @@ export const CreateAutomation: React.FC = () => {
 
   // Set default name and post when posts load
   useEffect(() => {
-    if (posts && posts.length > 0 && !name) {
+    if (posts && posts.length > 0 && name === 'Instagram AutoDM') {
       const defaultPost = posts.find((p) => p.external_post_id === 'post_new_shoes') || posts[0];
       setSelectedPostId(defaultPost.external_post_id);
       setExternalPostId(defaultPost.external_post_id);
@@ -99,7 +99,7 @@ export const CreateAutomation: React.FC = () => {
   };
 
   const validateStep1 = () => {
-    if (!socialAccountId) {
+    if (!socialAccountId && !connectedAccount?.id) {
       toast.error('Please connect an Instagram account first.');
       return false;
     }
@@ -129,30 +129,61 @@ export const CreateAutomation: React.FC = () => {
       toast.error('Please enter your direct message text.');
       return false;
     }
-    if (linkUrl && !linkUrl.startsWith('https://')) {
-      toast.error('Destination URL must start with https://');
-      return false;
+    if (linkUrl.trim()) {
+      let url = linkUrl.trim();
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = `https://${url}`;
+      }
+      if (url.startsWith('http://')) {
+        toast.error('Destination URL must use HTTPS (e.g. https://yourstore.com)');
+        return false;
+      }
     }
     return true;
   };
 
   const handleSubmit = async (activateImmediately: boolean = true) => {
-    if (!validateStep3()) return;
+    const targetAccountId = socialAccountId || connectedAccount?.id;
+    if (!targetAccountId) {
+      toast.error('Please connect an Instagram account first.');
+      setStep(1);
+      return;
+    }
+    if (!name.trim()) {
+      toast.error('Please name your automation.');
+      setStep(1);
+      return;
+    }
+    if (!validateStep2()) {
+      setStep(2);
+      return;
+    }
+    if (!validateStep3()) {
+      return;
+    }
+
+    let cleanLink = linkUrl.trim();
+    if (cleanLink && !cleanLink.startsWith('http://') && !cleanLink.startsWith('https://')) {
+      cleanLink = `https://${cleanLink}`;
+    }
+
+    const cleanKeyword = triggerMode === 'any' ? '*' : (keyword.trim().toUpperCase() || '*');
+    const autoName = name.trim() || 'Instagram AutoDM';
 
     try {
       await createMutation.mutateAsync({
-        name,
-        social_account_id: socialAccountId || '11111111-1111-1111-1111-111111111111',
-        external_post_id: externalPostId,
+        name: autoName,
+        social_account_id: targetAccountId,
+        external_post_id: externalPostId || 'all',
         post_url: postUrl || undefined,
         trigger: {
           type: 'comment_keyword',
-          keyword: triggerMode === 'any' ? '*' : keyword.trim().toUpperCase(),
+          keyword: cleanKeyword,
           match_mode: matchMode,
           case_sensitive: caseSensitive,
         },
         dm_message: dmMessage.trim(),
-        link_url: linkUrl.trim() || undefined,
+        link_url: cleanLink || undefined,
         allow_repeat: allowRepeat,
         reply_mode: replyMode,
         ai_instructions: replyMode === 'ai' ? aiInstructions.trim() : undefined,
@@ -160,14 +191,9 @@ export const CreateAutomation: React.FC = () => {
         intent_gate_description: intentGateEnabled ? intentGateDescription.trim() : undefined,
         status: activateImmediately ? 'active' : 'draft',
       });
-      toast.success(
-        activateImmediately
-          ? 'AutoDM activated! Live comments matching your trigger will now receive this DM.'
-          : 'Automation saved as draft.'
-      );
       navigate('/dashboard');
     } catch (e: any) {
-      toast.error(e.message || 'Failed to save automation.');
+      // Mutation's onError handles the error toast
     }
   };
 
@@ -642,7 +668,7 @@ export const CreateAutomation: React.FC = () => {
                     <span className="text-[10px] text-slate-400">Instagram Direct</span>
                   </div>
                 </div>
-                <Badge variant="mock" className="text-[9px]">Preview</Badge>
+                <Badge variant="draft" className="text-[9px]">Preview</Badge>
               </div>
 
               {/* Chat Simulation */}

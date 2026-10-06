@@ -46,12 +46,17 @@ class StepRepository:
             logger.error(f"Error persisting execution step for node {node}: {e}")
             return None
 
-    def get_steps_for_execution(self, execution_id: str) -> List[Dict[str, Any]]:
+    def get_steps_for_execution(self, execution_id: str, incoming_event_id: Optional[str] = None) -> List[Dict[str, Any]]:
         client = get_supabase_client()
         if not client:
             return []
         try:
-            res = client.table("execution_steps").select("*").eq("execution_id", execution_id).order("created_at").execute()
+            if incoming_event_id:
+                res = client.table("execution_steps").select("*").or_(
+                    f"execution_id.eq.{execution_id},incoming_event_id.eq.{incoming_event_id}"
+                ).order("created_at").execute()
+            else:
+                res = client.table("execution_steps").select("*").eq("execution_id", execution_id).order("created_at").execute()
             return res.data or []
         except Exception as e:
             logger.error(f"Error fetching steps for execution {execution_id}: {e}")

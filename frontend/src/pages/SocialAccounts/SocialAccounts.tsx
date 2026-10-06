@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { socialApi, PostItem } from '@/services/socialApi';
 import { Button } from '@/components/ui/Button';
@@ -13,7 +13,6 @@ import { toast } from 'sonner';
 import {
   Instagram,
   CheckCircle2,
-  AlertTriangle,
   Unlink,
   RefreshCw,
   Plus,
@@ -24,9 +23,39 @@ import {
 } from 'lucide-react';
 
 export const SocialAccounts: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [disconnectTargetId, setDisconnectTargetId] = useState<string | null>(null);
   const [simulatorPostId, setSimulatorPostId] = useState<string | null>(null);
+
+  // Check URL query parameters upon return from Meta OAuth redirect
+  useEffect(() => {
+    const connected = searchParams.get('connected');
+    const username = searchParams.get('username');
+    const error = searchParams.get('error');
+
+    if (connected === 'true') {
+      toast.success(
+        username
+          ? `Instagram account @${username} connected successfully! ✅`
+          : 'Instagram account connected successfully! ✅'
+      );
+      queryClient.invalidateQueries({ queryKey: ['social-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['account-posts'] });
+
+      // Clean search parameters from the URL
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('connected');
+      nextParams.delete('username');
+      setSearchParams(nextParams, { replace: true });
+    } else if (error) {
+      toast.error(`Instagram connection error: ${error}`);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('error');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, queryClient]);
 
   const { data: accounts, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['social-accounts'],
@@ -42,18 +71,15 @@ export const SocialAccounts: React.FC = () => {
   });
 
   const connectMutation = useMutation({
-    mutationFn: (platform: string) => socialApi.connect(platform),
+    mutationFn: (platform: string = 'instagram') => socialApi.connect(platform),
     onSuccess: (data) => {
-      if (data.mock) {
-        queryClient.invalidateQueries({ queryKey: ['social-accounts'] });
-        queryClient.invalidateQueries({ queryKey: ['account-posts'] });
-        toast.success('Mock Instagram account connected successfully!');
-      } else if (data.authorization_url) {
+      if (data.authorization_url) {
+        // Automatically redirect user to Instagram Login & Permissions screen
         window.location.href = data.authorization_url;
       }
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Failed to connect social account.');
+      toast.error(err.message || 'Failed to initiate Instagram connection.');
     },
   });
 
@@ -89,44 +115,19 @@ export const SocialAccounts: React.FC = () => {
         <div>
           <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Social Accounts</h2>
           <p className="text-xs text-slate-500 mt-1">
-            Connect your Instagram Creator or Business account to enable comment-to-DM state machines.
+            Authorize your Instagram account to trigger instant automated direct messages on post comments.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            onClick={() => connectMutation.mutate('mock')}
-            loading={connectMutation.isPending}
-            icon={<Sparkles className="w-4 h-4 text-indigo-600" />}
-          >
-            Demo Connect (@mybusiness)
-          </Button>
+        <div>
           <Button
             onClick={() => connectMutation.mutate('instagram')}
             loading={connectMutation.isPending}
             icon={<Instagram className="w-4 h-4" />}
+            className="bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-bold shadow-md shadow-rose-500/20"
           >
-            Connect with Meta
+            Connect Instagram
           </Button>
-        </div>
-      </div>
-
-      {/* Mock Mode Notice Banner (PRD §31) */}
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-        <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0">
-          <AlertTriangle className="w-5 h-5" />
-        </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
-              Mock Social Adapter Active
-            </h4>
-            <Badge variant="mock">Mock Mode</Badge>
-          </div>
-          <p className="text-xs text-amber-800 leading-relaxed">
-            AutoDM is operating in development mock mode. Connecting accounts creates a simulated Instagram Creator profile with sample Reels, bypassing Meta App Review and Facebook Business Verification.
-          </p>
         </div>
       </div>
 
@@ -134,8 +135,8 @@ export const SocialAccounts: React.FC = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Connected Instagram Profiles</CardTitle>
-            <CardDescription>Accounts authorized to process post comments into direct messages.</CardDescription>
+            <CardTitle>Connected Instagram Profile</CardTitle>
+            <CardDescription>Account authorized to process comments into direct messages.</CardDescription>
           </div>
         </CardHeader>
 
@@ -152,14 +153,57 @@ export const SocialAccounts: React.FC = () => {
               </Button>
             </div>
           ) : !accounts || accounts.length === 0 ? (
-            <EmptyState
-              icon={<Instagram className="w-6 h-6" />}
-              title="No social accounts connected"
-              description="Connect your Instagram Creator or Business account to begin automating comments."
-              actionText="Connect Demo Account"
-              actionIcon={<Instagram className="w-4 h-4" />}
-              onAction={() => connectMutation.mutate('mock')}
-            />
+            <div className="py-8 px-4 text-center space-y-6">
+              <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-rose-500/20">
+                <Instagram className="w-8 h-8" />
+              </div>
+
+              <div className="max-w-md mx-auto space-y-1.5">
+                <h3 className="text-lg font-bold text-slate-900">No Instagram Account Connected</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Click the button below to log in with your Instagram account and allow permissions. Your tokens and account details will be configured automatically.
+                </p>
+              </div>
+
+              {/* Automatic Connection Flow Steps */}
+              <div className="max-w-xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                    <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[11px]">1</span>
+                    <span>Connect</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Click Connect Instagram</p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                    <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[11px]">2</span>
+                    <span>Allow Permissions</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Log in &amp; grant access</p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                    <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px]">3</span>
+                    <span>Connected ✅</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Tokens saved automatically</p>
+                </div>
+              </div>
+
+              <div>
+                <Button
+                  size="lg"
+                  onClick={() => connectMutation.mutate('instagram')}
+                  loading={connectMutation.isPending}
+                  icon={<Instagram className="w-5 h-5" />}
+                  className="bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:opacity-95 text-white font-bold shadow-lg shadow-rose-500/25 px-8"
+                >
+                  Connect Instagram
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-6">
               {accounts.map((acc) => (
@@ -175,15 +219,15 @@ export const SocialAccounts: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-extrabold text-base text-slate-900">
-                            @{acc.username || 'maya.creates'}
+                            @{acc.username}
                           </span>
-                          <Badge variant={acc.status === 'connected' ? 'active' : 'paused'}>
-                            {acc.status}
-                          </Badge>
-                          <Badge variant="mock">Mock Profile</Badge>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            Connected ✅
+                          </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-1">
-                          Type: <strong className="text-slate-700">{acc.account_type || 'MEDIA_CREATOR'}</strong> · External ID: <code className="text-slate-600">{acc.external_account_id}</code>
+                          Type: <strong className="text-slate-700">{acc.account_type || 'BUSINESS'}</strong> · ID: <code className="text-slate-600">{acc.external_account_id}</code>
                         </p>
                       </div>
                     </div>

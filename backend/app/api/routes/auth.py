@@ -20,41 +20,39 @@ class SignupResponse(BaseModel):
     email: str
     name: Optional[str] = None
 
+class ResendOtpRequest(BaseModel):
+    email: str
+
+class VerifyOtpRequest(BaseModel):
+    email: str
+    token: str
+
 @router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=ApiResponse[SignupResponse])
-async def admin_signup(payload: SignupRequest):
+async def signup_with_otp(payload: SignupRequest):
     """
-    Direct server-side signup via Supabase Admin API:
-    - Automatically confirms email (bypasses email rate limits)
-    - Bypasses 'Signups not allowed for this instance' restrictions
-    - Triggers profiles creation and seeds initial mock social account
+    Registers a new user and triggers Supabase email OTP verification.
     """
     client = get_supabase_client()
     if not client:
-        raise AppError("DATABASE_ERROR", "Supabase admin client not configured.")
+        raise AppError("DATABASE_ERROR", "Supabase client not configured.")
 
     try:
-        # Create user via admin API
-        user_res = client.auth.admin.create_user({
+        # Create unconfirmed user via sign_up so Supabase automatically dispatches the verification code
+        res = client.auth.sign_up({
             "email": payload.email,
             "password": payload.password,
-            "email_confirm": True,
-            "user_metadata": {"name": payload.name or ""}
+            "options": {"data": {"name": payload.name or ""}}
         })
-        user = user_res.user
-
-        # Seed initial mock social account for the new user so they can immediately test automations
-        try:
-            client.table("social_accounts").insert({
-                "id": str(uuid.uuid4()),
-                "user_id": user.id,
-                "platform": "mock",
-                "external_account_id": f"mock_ig_{user.id[:8]}",
-                "username": f"{payload.name.lower().replace(' ', '') if payload.name else 'creator'}.creates",
-                "account_type": "MEDIA_CREATOR",
-                "status": "connected"
-            }).execute()
-        except Exception as e:
-            logger.warning(f"Could not seed default social account for new user: {e}")
+        user = res.user
+        if not user:
+            # Fallback to generate_link if direct sign_up is restricted
+            link_res = client.auth.admin.generate_link({
+                "type": "signup",
+                "email": payload.email,
+                "password": payload.password,
+                "data": {"name": payload.name or ""}
+            })
+            user = link_res.user
 
         return ApiResponse(data=SignupResponse(
             id=user.id,
@@ -64,7 +62,49 @@ async def admin_signup(payload: SignupRequest):
 
     except Exception as e:
         err_msg = str(e)
-        logger.error(f"Admin signup error: {err_msg}")
+        logger.error(f"Signup error: {err_msg}")
         if "already registered" in err_msg.lower():
             raise AppError(code="USER_ALREADY_EXISTS", message="A user with this email already exists.", http_status=409)
         raise AppError(code="SIGNUP_FAILED", message=f"Failed to create account: {err_msg}", http_status=400)
+
+@router.post("/resend-otp", response_model=ApiResponse[dict])
+async def resend_signup_otp(payload: ResendOtpRequest):
+    """Resend signup OTP code via Supabase."""
+    client = get_supabase_client()
+    if not client:
+        raise AppError("DATABASE_ERROR", "Supabase client not configured.")
+
+    try:
+        client.auth.resend({"type": "signup", "email": payload.email})
+        return ApiResponse(data={"sent": True, "message": "Verification code resent."})
+    except Exception as e:
+        logger.warning(f"Error resending OTP: {e}")
+        raise AppError(code="RESEND_FAILED", message=str(e), http_status=400)
+
+@router.post("/verify-otp", response_model=ApiResponse[dict])
+async def verify_signup_otp(payload: VerifyOtpRequest):
+    """Verify signup OTP code with Supabase."""
+    client = get_supabase_client()
+    if not client:
+        raise AppError("DATABASE_ERROR", "Supabase client not configured.")
+
+    clean_token = payload.token.strip().replace(" ", "")
+    try:
+        res = client.auth.verify_otp({
+            "email": payload.email,
+            "token": clean_token,
+            "type": "signup"
+        })
+        return ApiResponse(data={"verified": True, "user_id": res.user.id if res.user else None})
+    except Exception:
+        # Fallback to type 'email'
+        try:
+            res = client.auth.verify_otp({
+                "email": payload.email,
+                "token": clean_token,
+                "type": "email"
+            })
+            return ApiResponse(data={"verified": True, "user_id": res.user.id if res.user else None})
+        except Exception as e:
+            logger.warning(f"OTP verification failed for {payload.email}: {e}")
+            raise AppError(code="INVALID_OTP", message="Invalid or expired verification code.", http_status=400)

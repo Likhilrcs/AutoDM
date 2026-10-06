@@ -54,20 +54,42 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
     if not client:
         return ApiResponse(data=summary)
 
+    # 1. Connected Account Summary
     try:
-        # 1. Automations counts and active campaigns
+        acc_res = client.table("social_accounts").select("id, username, status").eq("user_id", user_id).limit(1).execute()
+        if acc_res.data and len(acc_res.data) > 0:
+            row = acc_res.data[0]
+            summary.connected_account = ConnectedAccountSummary(
+                id=row["id"],
+                username=row.get("username") or "creator",
+                status=row.get("status") or "connected",
+                followers_count=0
+            )
+    except Exception as e:
+        logger.error(f"Error fetching connected account for dashboard: {e}")
+
+    # 2. Automations counts and active campaigns
+    automations = []
+    try:
         auto_res = client.table("automations").select(
-            "id, name, target_post_id, status, automation_triggers(keyword)"
+            "id, name, external_post_id, post_url, status, automation_triggers(keyword)"
         ).eq("user_id", user_id).is_("deleted_at", "null").execute()
         automations = auto_res.data or []
         summary.total_automations = len(automations)
         summary.active_automations = sum(1 for a in automations if a.get("status") == "active")
+    except Exception as e:
+        logger.error(f"Error fetching automations for dashboard: {e}")
 
-        # 2. Total comments received
+    # 3. Total comments received
+    try:
         comm_res = client.table("incoming_events").select("id", count="exact").eq("user_id", user_id).execute()
         summary.total_comments = comm_res.count or 0
+    except Exception as e:
+        logger.error(f"Error fetching comments count for dashboard: {e}")
 
-        # 3. Executions / DMs counts
+    # 4. Executions / DMs counts
+    executions = []
+    try:
         exec_res = client.table("executions").select("id, status, automation_id").eq("user_id", user_id).execute()
         executions = exec_res.data or []
         summary.total_dms = len(executions)
@@ -94,24 +116,16 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
                     id=a["id"],
                     name=a["name"],
                     trigger_keyword=kw or "link",
-                    target_post_id=a.get("target_post_id"),
+                    target_post_id=a.get("external_post_id") or a.get("post_url"),
                     status=a["status"],
                     dms_sent=exec_by_auto.get(a["id"], 0)
                 ))
         summary.active_campaigns = campaigns[:4]
+    except Exception as e:
+        logger.error(f"Error fetching executions for dashboard: {e}")
 
-        # 4. Connected Account Summary
-        acc_res = client.table("social_accounts").select("id, username, status").eq("user_id", user_id).limit(1).execute()
-        if acc_res.data and len(acc_res.data) > 0:
-            row = acc_res.data[0]
-            summary.connected_account = ConnectedAccountSummary(
-                id=row["id"],
-                username=row.get("username") or "creator",
-                status=row.get("status") or "connected",
-                followers_count=24500
-            )
-
-        # 5. Recent activity
+    # 5. Recent activity
+    try:
         rec_res = client.table("executions").select(
             "id, status, created_at, automations(name, automation_triggers(keyword)), incoming_events(comment_text, commenter_username)",
         ).eq("user_id", user_id).order("created_at", desc=True).limit(10).execute()
@@ -136,8 +150,7 @@ async def get_dashboard_summary(current_user: dict = Depends(get_current_user)):
             ))
 
         summary.recent_activity = recent_items
-
     except Exception as e:
-        logger.error(f"Error computing dashboard summary: {e}")
+        logger.error(f"Error fetching recent activity for dashboard: {e}")
 
     return ApiResponse(data=summary)

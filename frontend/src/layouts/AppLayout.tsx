@@ -152,7 +152,10 @@ export const AppLayout: React.FC = () => {
 
           <div className="flex items-center gap-3">
             {/* Environment Badge */}
-            <Badge variant="mock">Mock Mode</Badge>
+            <Badge variant="live" className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live
+            </Badge>
           </div>
         </header>
 

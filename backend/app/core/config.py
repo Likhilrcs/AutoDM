@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     SOCIAL_CLIENT_ID: str = ""
     SOCIAL_CLIENT_SECRET: str = ""
     SOCIAL_REDIRECT_URI: str = "https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback"
+    INSTAGRAM_SCOPES: str = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments"
     WEBHOOK_VERIFY_TOKEN: str = "autodm_webhook_verify_token_secret"
     GRAPH_API_VERSION: str = "v21.0"
 

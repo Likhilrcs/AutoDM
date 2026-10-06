@@ -74,6 +74,28 @@ def create_app() -> FastAPI:
             "llm_provider": settings.LLM_PROVIDER,
         }
 
+    # Meta Compliance Endpoints
+    @app.get("/privacy", tags=["Legal"])
+    async def privacy_policy():
+        return {"policy": "AutoDM Privacy Policy - We do not sell or store personal data beyond automated messaging configuration."}
+
+    @app.get("/terms", tags=["Legal"])
+    async def terms_of_service():
+        return {"terms": "AutoDM Terms of Service - Used for Instagram comment and DM automation."}
+
+    @app.get("/deauthorize", tags=["Legal"])
+    @app.post("/deauthorize", tags=["Legal"])
+    async def deauthorize_callback():
+        return {"status": "ok", "message": "Deauthorization acknowledged."}
+
+    @app.get("/data-deletion", tags=["Legal"])
+    @app.post("/data-deletion", tags=["Legal"])
+    async def data_deletion_callback():
+        return {
+            "url": "https://recliner-filter-luxurious.ngrok-free.dev/privacy",
+            "confirmation_code": "del_autodm_complete"
+        }
+
     # API v1 routes
     app.include_router(auth.router, prefix="/api/v1")
     app.include_router(users.router, prefix="/api/v1")
@@ -83,6 +105,10 @@ def create_app() -> FastAPI:
     app.include_router(executions.router, prefix="/api/v1")
     app.include_router(settings_route.router, prefix="/api/v1")
     app.include_router(webhooks.router, prefix="/api/v1")
+
+    # Direct root-level routes for Meta Webhook and OAuth callback compatibility
+    app.include_router(webhooks.router)
+    app.include_router(social_accounts.router)
 
     return app
 

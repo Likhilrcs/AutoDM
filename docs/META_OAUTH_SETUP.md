@@ -52,27 +52,24 @@ Complete reference for setting up Meta's Instagram OAuth flow with AutoDM.
    * **Instagram Graph API** (for business comments, media, and DMs)
    * **Facebook Login for Business** (for token authorization)
 
-### Step C: Configure OAuth Redirect URIs
-1. In the sidebar under **Facebook Login for Business** $\to$ **Settings**:
-2. Find **Valid OAuth Redirect URIs**.
-3. Add your backend callback URL:
+### Step C: Configure OAuth Redirect URIs (CRITICAL)
+
+Because your app uses the **Instagram Business Login** flow (`client_id=1865064594103092`):
+
+1. In your Meta App Dashboard left sidebar, navigate to:
+   👉 **Instagram** $\to$ **API setup with Instagram login**.
+2. Scroll down past *2. Configure webhooks* to:
+   👉 **3. Set up Instagram business login**.
+3. Click **Business login settings**.
+4. In the **OAuth redirect URIs** box, paste your callback URL:
    * **Your Active Ngrok URL:**
      ```text
      https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback
      ```
-   * **Production:**
-     ```text
-     https://api.yourdomain.com/api/v1/social/callback
-     ```
-4. Click **Save Changes**.
+     *(Also add `https://recliner-filter-luxurious.ngrok-free.dev/api/v1/social/callback/` with the trailing slash)*
+5. Click **Save Changes** at the bottom of the section.
 
-### Step D: Get Credentials
-1. Go to **App Settings** $\to$ **Basic** in the left sidebar.
-2. Copy:
-   * **App ID** $\to$ This is your `SOCIAL_CLIENT_ID`
-   * **App Secret** $\to$ This is your `SOCIAL_CLIENT_SECRET`
-
----
+*(Note: If you only add the redirect URI under "Facebook Login", Instagram will reject it with `Invalid redirect_uri`. It must be saved in **Instagram Business login settings**).*
 
 ## 3. Environment Variables (`backend/.ENV`)
 

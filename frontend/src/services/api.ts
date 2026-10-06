@@ -54,7 +54,19 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     if (body && body.error) {
-      throw new ApiException(response.status, body.error);
+      let msg = body.error.message || 'An unexpected error occurred.';
+      if (body.error.details && typeof body.error.details === 'object' && Object.keys(body.error.details).length > 0) {
+        const detailsStr = Object.entries(body.error.details)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(', ');
+        if (!msg || msg === 'Invalid request parameters.' || msg.startsWith('Invalid request parameters')) {
+          msg = `Validation error: ${detailsStr}`;
+        }
+      }
+      throw new ApiException(response.status, {
+        ...body.error,
+        message: msg,
+      });
     }
     throw new ApiException(response.status, {
       code: 'HTTP_ERROR',
@@ -75,4 +87,6 @@ export const userApi = {
   getProfile: () => apiClient<any>('/users/me'),
   updateProfile: (data: { name?: string; avatar_url?: string }) =>
     apiClient<any>('/users/me', { method: 'PUT', body: JSON.stringify(data) }),
+  deleteAccount: () =>
+    apiClient<{ success: boolean; message: string }>('/users/me', { method: 'DELETE' }),
 };

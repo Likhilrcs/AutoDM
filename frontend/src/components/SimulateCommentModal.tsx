@@ -64,7 +64,7 @@ export const SimulateCommentModal: React.FC<SimulateCommentModalProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       title="Simulate Instagram Comment"
-      description="Trigger the LangGraph automation engine live without waiting for a real Instagram comment."
+      description="Test your comment-to-DM automation live without waiting for a real Instagram comment."
       maxWidth="lg"
     >
       <div className="space-y-5">

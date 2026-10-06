@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { dashboardApi } from '@/services/dashboardApi';
 import { useAuth } from '@/context/AuthContext';
 import { StatCard } from '@/components/ui/StatCard';
@@ -31,6 +32,18 @@ export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [activityFilter, setActivityFilter] = useState<'all' | 'sent' | 'failed'>('all');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('connected') === 'true') {
+      const uname = params.get('username');
+      toast.success(uname ? `Instagram @${uname} connected successfully!` : 'Instagram connected successfully!');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (params.get('error')) {
+      toast.error(`Instagram connection error: ${params.get('error')}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const { data: summary, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['dashboard-summary'],
@@ -187,9 +200,9 @@ export const Dashboard: React.FC = () => {
               <div className="w-7 h-7 rounded-lg bg-indigo-500/40 flex items-center justify-center text-xs font-bold text-white">
                 2
               </div>
-              <h4 className="text-xs font-bold text-white">Webhook Ingestion</h4>
+              <h4 className="text-xs font-bold text-white">Live Comment Detection</h4>
               <p className="text-[11px] text-indigo-200/90 leading-relaxed">
-                Instagram sends comment webhook. AutoDM normalizes Unicode NFKC and strips emojis.
+                When a follower comments on your Instagram post or reel, AutoDM captures the event in real-time.
               </p>
             </div>
 
@@ -197,9 +210,9 @@ export const Dashboard: React.FC = () => {
               <div className="w-7 h-7 rounded-lg bg-indigo-500/40 flex items-center justify-center text-xs font-bold text-white">
                 3
               </div>
-              <h4 className="text-xs font-bold text-white">LangGraph Matching</h4>
+              <h4 className="text-xs font-bold text-white">Smart Keyword Matching</h4>
               <p className="text-[11px] text-indigo-200/90 leading-relaxed">
-                Deterministic regex matches keyword, checks 24h dedupe cooldown, and formats reply.
+                Matches your specified keyword, checks duplicate cooldowns, and formats the response.
               </p>
             </div>
 
@@ -209,7 +222,7 @@ export const Dashboard: React.FC = () => {
               </div>
               <h4 className="text-xs font-bold text-white">Instant DM Delivery</h4>
               <p className="text-[11px] text-indigo-200/90 leading-relaxed">
-                Direct message delivered to user's inbox with your link and converted into an active lead.
+                Direct message delivered directly to follower's inbox with your personalized message and link.
               </p>
             </div>
           </div>
@@ -292,32 +305,43 @@ export const Dashboard: React.FC = () => {
               <CardTitle>Connected Instagram Profile</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3.5 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-purple-500/10 border border-rose-200/50">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-sm shrink-0">
-                  <Instagram className="w-6 h-6" />
-                </div>
-                <div className="overflow-hidden">
-                  <span className="font-bold text-sm text-slate-900 block truncate">
-                    @{summary?.connected_account?.username || 'maya.creates'}
-                  </span>
-                  <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Token Active
-                  </span>
-                </div>
-              </div>
+              {summary?.connected_account && summary.connected_account.status === 'connected' ? (
+                <>
+                  <div className="flex items-center gap-3.5 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-purple-500/10 border border-rose-200/50">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-sm shrink-0">
+                      <Instagram className="w-6 h-6" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="font-bold text-sm text-slate-900 block truncate">
+                        @{summary.connected_account.username}
+                      </span>
+                      <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Connected & Active
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-xs text-slate-400 block font-medium">Followers</span>
-                  <span className="text-sm font-bold text-slate-800">
-                    {(summary?.connected_account?.followers_count || 24500).toLocaleString()}
-                  </span>
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-xs text-slate-400 block font-medium">Status</span>
+                      <span className="text-sm font-bold text-emerald-600">Active</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-xs text-slate-400 block font-medium">Platform</span>
+                      <span className="text-sm font-bold text-indigo-600">Instagram</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 rounded-xl border border-dashed border-slate-200 text-center space-y-2">
+                  <p className="text-xs text-slate-500">No Instagram account linked.</p>
+                  <Link to="/social-accounts">
+                    <Button size="sm" variant="outline" className="w-full">
+                      Connect Account
+                    </Button>
+                  </Link>
                 </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-xs text-slate-400 block font-medium">Platform</span>
-                  <span className="text-sm font-bold text-indigo-600">Instagram</span>
-                </div>
-              </div>
+              )}
 
               <Link to="/social-accounts" className="block">
                 <Button variant="outline" size="sm" className="w-full">

@@ -22,9 +22,13 @@ export const useCreateAutomation = () => {
 
   return useMutation({
     mutationFn: (data: CreateAutomationPayload) => automationsApi.create(data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['automations'] });
-      toast.success('Automation created successfully!');
+      toast.success(
+        data.status === 'active'
+          ? 'AutoDM activated! Live comments matching your trigger will now receive this DM.'
+          : 'Automation saved as draft.'
+      );
     },
     onError: (err: any) => {
       toast.error(err.message || 'Failed to create automation.');

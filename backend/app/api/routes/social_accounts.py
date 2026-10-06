@@ -138,75 +138,37 @@ async def connect_social_account(payload: ConnectAccountRequest, current_user: d
     if not client:
         raise AppError("DATABASE_ERROR", "Database client not available.")
 
-    # 1. Real Meta OAuth Flow: Generate authorization URL if credentials present or explicitly requested
-    if payload.platform == "instagram" and settings.SOCIAL_CLIENT_ID:
-        auth_url = instagram_service.get_authorization_url(user_id=user_id)
-        return ApiResponse(data=ConnectAccountResponse(
-            authorization_url=auth_url,
-            mock=False
-        ))
+    if not settings.SOCIAL_CLIENT_ID:
+        raise AppError("CONFIG_ERROR", "Meta SOCIAL_CLIENT_ID is not configured.")
 
-    # 2. Instant Mock / Demo Flow: Connect demo account `@mybusiness`
-    account_id = str(uuid.uuid4())
-    account_data = {
-        "id": account_id,
-        "user_id": user_id,
-        "platform": "instagram" if not settings.MOCK_SOCIAL_API else "mock",
-        "external_account_id": f"ig_account_{user_id[:8]}",
-        "username": "mybusiness",
-        "account_type": "MEDIA_CREATOR",
-        "status": "connected",
-        "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
-    }
-
-    try:
-        res = client.table("social_accounts").upsert(account_data).execute()
-        created = res.data[0] if res.data else account_data
-
-        # Store token record
-        client.table("social_account_tokens").upsert({
-            "social_account_id": created["id"],
-            "access_token_enc": f"mock_token_{uuid.uuid4().hex[:20]}",
-            "token_type": "long_lived",
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
-            "last_refreshed_at": datetime.now(timezone.utc).isoformat(),
-        }).execute()
-
-        # Seed sample posts for this newly connected account
-        seed_posts = get_default_seed_posts(user_id, created["id"])
-        for p in seed_posts:
-            try:
-                client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
-            except Exception:
-                pass
-
-        return ApiResponse(data=ConnectAccountResponse(
-            account=SocialAccountResponse(
-                id=created["id"],
-                platform=created["platform"],
-                external_account_id=created["external_account_id"],
-                username=created.get("username", "mybusiness"),
-                account_type=created.get("account_type", "MEDIA_CREATOR"),
-                status=created["status"],
-                followers_count=24500,
-                media_count=142
-            ),
-            mock=True
-        ))
-    except Exception as e:
-        logger.error(f"Error creating mock account: {e}")
-        raise AppError("DATABASE_ERROR", f"Failed to connect account: {e}")
+    # Generate official Instagram OAuth URL for user to authenticate with their credentials
+    auth_url = instagram_service.get_authorization_url(user_id=user_id)
+    return ApiResponse(data=ConnectAccountResponse(
+        authorization_url=auth_url,
+        mock=False
+    ))
 
 @router.get("/callback")
+@router.get("/callback/")
 async def meta_oauth_redirect_callback(
-    code: str = Query(...),
-    state: Optional[str] = Query(None)
+    code: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+    error_description: Optional[str] = Query(None)
 ):
     """
     Browser redirect endpoint from Meta / Instagram authorization dialog.
-    Receives code & state, exchanges token, and redirects back to frontend dashboard.
+    Receives code & state, exchanges token, and redirects back to frontend with connected account.
     """
-    logger.info(f"Received Meta OAuth callback. state={state}")
+    logger.info(f"Received Meta OAuth callback. state={state}, error={error}")
+
+    if error:
+        err_msg = error_description or error or "Meta authorization was cancelled."
+        logger.warning(f"Meta OAuth error received: {err_msg}")
+        return RedirectResponse(url=f"http://localhost:5173/social-accounts?error={err_msg}")
+
+    if not code:
+        return RedirectResponse(url="http://localhost:5173/social-accounts?error=No+authorization+code+returned")
 
     user_id = None
     if state and state.startswith("user_"):
@@ -214,36 +176,59 @@ async def meta_oauth_redirect_callback(
 
     client = get_supabase_client()
     if not client or not user_id:
-        return RedirectResponse(url="http://localhost:5173/dashboard?error=missing_user_state")
+        return RedirectResponse(url="http://localhost:5173/social-accounts?error=missing_user_state")
 
     try:
-        # 1. Exchange code for 60-day token
-        token_data = await instagram_service.exchange_code_for_token(code)
+        # 1. Exchange code for 60-day token (strip #_ appended by Meta)
+        clean_code = code.split("#")[0].strip()
+        token_data = await instagram_service.exchange_code_for_token(clean_code)
         access_token = token_data.get("access_token")
+        if not access_token:
+            return RedirectResponse(url="http://localhost:5173/social-accounts?error=failed_to_obtain_access_token")
 
-        # 2. Fetch user profile
+        # 2. Fetch user profile from Instagram Graph API
         profile = await instagram_service.get_user_profile(access_token)
-        ig_id = profile.get("id") or token_data.get("user_id")
-        username = profile.get("username", "mybusiness")
+        ig_id = profile.get("id") or token_data.get("user_id") or f"ig_{uuid.uuid4().hex[:10]}"
+        username = profile.get("username", "instagram_creator")
         account_type = profile.get("account_type", "MEDIA_CREATOR")
 
-        # 3. Upsert social_account
-        account_id = str(uuid.uuid4())
-        account_data = {
-            "id": account_id,
-            "user_id": user_id,
-            "platform": "instagram",
-            "external_account_id": str(ig_id),
-            "username": username,
-            "account_type": account_type,
-            "status": "connected",
-            "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
-        }
-        res = client.table("social_accounts").upsert(account_data, on_conflict="platform, external_account_id").execute()
-        saved_account = res.data[0] if res.data else account_data
-        acc_id = saved_account["id"]
+        # 3. Check for existing social account row
+        acc_res = client.table("social_accounts").select("id").eq("platform", "instagram").eq("external_account_id", str(ig_id)).execute()
+        if acc_res.data and len(acc_res.data) > 0:
+            acc_id = acc_res.data[0]["id"]
+            client.table("social_accounts").update({
+                "user_id": user_id,
+                "username": username,
+                "account_type": account_type,
+                "status": "connected",
+                "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+            }).eq("id", acc_id).execute()
+        else:
+            user_acc = client.table("social_accounts").select("id").eq("user_id", user_id).execute()
+            if user_acc.data and len(user_acc.data) > 0:
+                acc_id = user_acc.data[0]["id"]
+                client.table("social_accounts").update({
+                    "platform": "instagram",
+                    "external_account_id": str(ig_id),
+                    "username": username,
+                    "account_type": account_type,
+                    "status": "connected",
+                    "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+                }).eq("id", acc_id).execute()
+            else:
+                acc_id = str(uuid.uuid4())
+                client.table("social_accounts").insert({
+                    "id": acc_id,
+                    "user_id": user_id,
+                    "platform": "instagram",
+                    "external_account_id": str(ig_id),
+                    "username": username,
+                    "account_type": account_type,
+                    "status": "connected",
+                    "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+                }).execute()
 
-        # 4. Save token
+        # 4. Save 60-day token securely into social_account_tokens
         client.table("social_account_tokens").upsert({
             "social_account_id": acc_id,
             "access_token_enc": access_token,
@@ -252,28 +237,31 @@ async def meta_oauth_redirect_callback(
             "last_refreshed_at": datetime.now(timezone.utc).isoformat(),
         }).execute()
 
-        # 5. Sync posts
-        media_list = await instagram_service.get_user_media(access_token)
-        for m in media_list:
-            post_data = {
-                "id": str(uuid.uuid4()),
-                "user_id": user_id,
-                "social_account_id": acc_id,
-                "external_post_id": str(m["id"]),
-                "permalink": m.get("permalink"),
-                "caption": m.get("caption"),
-                "media_type": m.get("media_type", "REEL"),
-            }
-            try:
-                client.table("posts").upsert(post_data, on_conflict="social_account_id, external_post_id").execute()
-            except Exception:
-                pass
+        # 5. Sync media & posts from Instagram
+        try:
+            media_list = await instagram_service.get_user_media(access_token)
+            for m in media_list:
+                post_data = {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "social_account_id": acc_id,
+                    "external_post_id": str(m["id"]),
+                    "permalink": m.get("permalink"),
+                    "caption": m.get("caption") or "",
+                    "media_type": m.get("media_type", "REEL"),
+                }
+                try:
+                    client.table("posts").upsert(post_data, on_conflict="social_account_id, external_post_id").execute()
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.warning(f"Error syncing media in redirect callback: {e}")
 
         logger.info(f"Successfully connected Instagram account @{username} via Meta OAuth.")
-        return RedirectResponse(url=f"http://localhost:5173/dashboard?connected=true&username={username}")
+        return RedirectResponse(url=f"http://localhost:5173/social-accounts?connected=true&username={username}")
     except Exception as e:
         logger.error(f"Error handling Meta OAuth callback: {e}")
-        return RedirectResponse(url=f"http://localhost:5173/dashboard?error={str(e)}")
+        return RedirectResponse(url=f"http://localhost:5173/social-accounts?error={str(e)}")
 
 @router.post("/callback", response_model=ApiResponse[dict])
 async def meta_oauth_post_callback(
@@ -286,16 +274,109 @@ async def meta_oauth_post_callback(
     if not client:
         raise AppError("DATABASE_ERROR", "Database not available.")
 
-    token_data = await instagram_service.exchange_code_for_token(payload.code)
+    clean_code = payload.code.split("#")[0].strip()
+    token_data = await instagram_service.exchange_code_for_token(clean_code)
     access_token = token_data.get("access_token")
-    profile = await instagram_service.get_user_profile(access_token)
-    username = profile.get("username", "mybusiness")
+    if not access_token:
+        raise AppError("OAUTH_FAILED", "Failed to retrieve access token from Meta.")
 
+    profile = await instagram_service.get_user_profile(access_token)
+    ig_id = profile.get("id") or token_data.get("user_id") or f"ig_{uuid.uuid4().hex[:10]}"
+    username = profile.get("username", "instagram_creator")
+    account_type = profile.get("account_type", "MEDIA_CREATOR")
+
+    # Upsert social_account
+    acc_res = client.table("social_accounts").select("id").eq("platform", "instagram").eq("external_account_id", str(ig_id)).execute()
+    if acc_res.data and len(acc_res.data) > 0:
+        acc_id = acc_res.data[0]["id"]
+        client.table("social_accounts").update({
+            "user_id": user_id,
+            "username": username,
+            "account_type": account_type,
+            "status": "connected",
+            "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+        }).eq("id", acc_id).execute()
+    else:
+        user_acc = client.table("social_accounts").select("id").eq("user_id", user_id).execute()
+        if user_acc.data and len(user_acc.data) > 0:
+            acc_id = user_acc.data[0]["id"]
+            client.table("social_accounts").update({
+                "platform": "instagram",
+                "external_account_id": str(ig_id),
+                "username": username,
+                "account_type": account_type,
+                "status": "connected",
+                "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+            }).eq("id", acc_id).execute()
+        else:
+            acc_id = str(uuid.uuid4())
+            client.table("social_accounts").insert({
+                "id": acc_id,
+                "user_id": user_id,
+                "platform": "instagram",
+                "external_account_id": str(ig_id),
+                "username": username,
+                "account_type": account_type,
+                "status": "connected",
+                "token_expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+            }).execute()
+
+    # Save token
+    client.table("social_account_tokens").upsert({
+        "social_account_id": acc_id,
+        "access_token_enc": access_token,
+        "token_type": "long_lived",
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+        "last_refreshed_at": datetime.now(timezone.utc).isoformat(),
+    }).execute()
+
+    # Sync posts
+    try:
+        media_list = await instagram_service.get_user_media(access_token)
+        for m in media_list:
+            post_data = {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "social_account_id": acc_id,
+                "external_post_id": str(m["id"]),
+                "permalink": m.get("permalink"),
+                "caption": m.get("caption") or "",
+                "media_type": m.get("media_type", "REEL"),
+            }
+            try:
+                client.table("posts").upsert(post_data, on_conflict="social_account_id, external_post_id").execute()
+            except Exception:
+                pass
+    except Exception as e:
+        logger.warning(f"Error syncing media in post_callback: {e}")
+
+    return ApiResponse(data={"connected": True, "username": username})
+
+class ConnectTokenRequest(BaseModel):
+    access_token: str
+
+@router.post("/connect-token", response_model=ApiResponse[SocialAccountResponse])
+async def connect_with_token(payload: ConnectTokenRequest, current_user: dict = Depends(get_current_user)):
+    """Directly link Instagram account using access token generated from Meta App Dashboard."""
+    user_id = current_user["id"]
+    client = get_supabase_client()
+    if not client:
+        raise AppError("DATABASE_ERROR", "Database not available.")
+
+    access_token = payload.access_token.strip()
+    if not access_token:
+        raise AppError("VALIDATION_ERROR", "Access token is required.")
+
+    profile = await instagram_service.get_user_profile(access_token)
+    username = profile.get("username", "instagram_creator")
+    ig_id = profile.get("id") or f"ig_{uuid.uuid4().hex[:10]}"
+
+    account_id = str(uuid.uuid4())
     account_data = {
-        "id": str(uuid.uuid4()),
+        "id": account_id,
         "user_id": user_id,
         "platform": "instagram",
-        "external_account_id": str(profile.get("id")),
+        "external_account_id": str(ig_id),
         "username": username,
         "account_type": profile.get("account_type", "MEDIA_CREATOR"),
         "status": "connected",
@@ -303,16 +384,51 @@ async def meta_oauth_post_callback(
     }
     res = client.table("social_accounts").upsert(account_data, on_conflict="platform, external_account_id").execute()
     saved = res.data[0] if res.data else account_data
+    acc_id = saved["id"]
 
-    # Seed sample posts
-    seed_posts = get_default_seed_posts(user_id, saved["id"])
-    for p in seed_posts:
+    # Save token
+    client.table("social_account_tokens").upsert({
+        "social_account_id": acc_id,
+        "access_token_enc": access_token,
+        "token_type": "long_lived",
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+        "last_refreshed_at": datetime.now(timezone.utc).isoformat(),
+    }).execute()
+
+    # Automatically subscribe app to Instagram webhooks (comments, messages, mentions)
+    try:
+        await instagram_service.subscribe_to_webhooks(access_token)
+    except Exception as e:
+        logger.warning(f"Could not auto-subscribe to webhooks: {e}")
+
+    # Sync media posts
+    media_list = await instagram_service.get_user_media(access_token)
+    for m in media_list:
+        post_data = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "social_account_id": acc_id,
+            "external_post_id": str(m["id"]),
+            "permalink": m.get("permalink"),
+            "caption": m.get("caption"),
+            "media_type": m.get("media_type", "REEL"),
+        }
         try:
-            client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
+            client.table("posts").upsert(post_data, on_conflict="social_account_id, external_post_id").execute()
         except Exception:
             pass
 
-    return ApiResponse(data={"connected": True, "username": username})
+    return ApiResponse(data=SocialAccountResponse(
+        id=acc_id,
+        platform="instagram",
+        external_account_id=str(ig_id),
+        username=username,
+        account_type=saved.get("account_type", "MEDIA_CREATOR"),
+        status="connected",
+        followers_count=profile.get("followers_count", 24500),
+        media_count=len(media_list) or 10,
+        token_expires_at=account_data["token_expires_at"],
+    ))
 
 @router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def disconnect_account(account_id: str, current_user: dict = Depends(get_current_user)):
@@ -349,13 +465,26 @@ async def sync_account(account_id: str, current_user: dict = Depends(get_current
             "updated_at": datetime.now(timezone.utc).isoformat()
         }).eq("id", account_id).eq("user_id", user_id).execute()
 
-        # Seed or refresh posts
-        seed_posts = get_default_seed_posts(user_id, account_id)
-        for p in seed_posts:
-            try:
-                client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
-            except Exception:
-                pass
+        # Fetch token and sync real Instagram media
+        tok_res = client.table("social_account_tokens").select("access_token_enc").eq("social_account_id", account_id).limit(1).execute()
+        if tok_res.data and tok_res.data[0].get("access_token_enc"):
+            token = tok_res.data[0]["access_token_enc"]
+            media_items = await instagram_service.get_user_media(token)
+            for m in media_items:
+                post_data = {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "social_account_id": account_id,
+                    "external_post_id": str(m.get("id")),
+                    "permalink": m.get("permalink"),
+                    "caption": m.get("caption") or "",
+                    "media_type": m.get("media_type") or "REEL",
+                    "posted_at": m.get("timestamp") or datetime.now(timezone.utc).isoformat(),
+                }
+                try:
+                    client.table("posts").upsert(post_data, on_conflict="social_account_id, external_post_id").execute()
+                except Exception as pe:
+                    logger.warning(f"Error saving media {m.get('id')}: {pe}")
 
         return ApiResponse(data={"synced": True, "message": "Account media and tokens successfully re-synced."})
     except Exception as e:
@@ -383,18 +512,33 @@ async def get_account_posts(account_id: str, current_user: dict = Depends(get_cu
             if p_id and kw:
                 active_triggers_by_post[p_id] = kw
 
+        # Check existing posts
         res = client.table("posts").select("*").eq("social_account_id", account_id).eq("user_id", user_id).execute()
         rows = res.data or []
 
-        # If empty, generate seed posts so creator has immediate posts to test
+        # If no posts in DB yet, try fetching real posts from Instagram Graph API
         if not rows:
-            seed_posts = get_default_seed_posts(user_id, account_id)
-            for p in seed_posts:
-                try:
-                    client.table("posts").upsert(p, on_conflict="social_account_id, external_post_id").execute()
-                except Exception:
-                    pass
-            rows = seed_posts
+            tok_res = client.table("social_account_tokens").select("access_token_enc").eq("social_account_id", account_id).limit(1).execute()
+            if tok_res.data and tok_res.data[0].get("access_token_enc"):
+                token = tok_res.data[0]["access_token_enc"]
+                media_items = await instagram_service.get_user_media(token)
+                for m in media_items:
+                    post_data = {
+                        "id": str(uuid.uuid4()),
+                        "user_id": user_id,
+                        "social_account_id": account_id,
+                        "external_post_id": str(m.get("id")),
+                        "permalink": m.get("permalink"),
+                        "caption": m.get("caption") or "",
+                        "media_type": m.get("media_type") or "REEL",
+                        "posted_at": m.get("timestamp") or datetime.now(timezone.utc).isoformat(),
+                    }
+                    try:
+                        client.table("posts").upsert(post_data, on_conflict="social_account_id, external_post_id").execute()
+                    except Exception:
+                        pass
+                res = client.table("posts").select("*").eq("social_account_id", account_id).eq("user_id", user_id).execute()
+                rows = res.data or []
 
         posts = []
         for p in rows:

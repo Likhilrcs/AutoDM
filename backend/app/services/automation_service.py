@@ -29,8 +29,17 @@ class AutomationService:
 
     def create_automation(self, user_id: str, payload: AutomationCreate) -> Dict[str, Any]:
         # 1. Ownership check: verify social_account_id belongs to user
+        if not payload.social_account_id or payload.social_account_id == "11111111-1111-1111-1111-111111111111":
+            default_acc = automation_repo.get_default_social_account(user_id)
+            if default_acc:
+                payload.social_account_id = str(default_acc["id"])
+
         if not automation_repo.check_social_account_ownership(user_id, payload.social_account_id):
-            raise ForbiddenError("You do not own this social account or it does not exist.")
+            default_acc = automation_repo.get_default_social_account(user_id)
+            if default_acc:
+                payload.social_account_id = str(default_acc["id"])
+            else:
+                raise ForbiddenError("You do not own this social account or it does not exist.")
 
         # 2. Normalize keyword
         keyword_norm = normalize(payload.trigger.keyword, payload.trigger.case_sensitive)

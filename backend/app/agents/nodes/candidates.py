@@ -13,11 +13,16 @@ async def load_candidates(state: AutomationState) -> Dict[str, Any]:
         return {"candidates": []}
 
     try:
-        res = client.table("automations").select(
+        query = client.table("automations").select(
             "*, automation_triggers(*)"
-        ).eq("social_account_id", social_account_id).eq("external_post_id", external_post_id).eq(
-            "status", "active"
-        ).is_("deleted_at", "null").order("created_at").execute()
+        ).eq("social_account_id", social_account_id).eq("status", "active").is_("deleted_at", "null")
+
+        if external_post_id and external_post_id != "all":
+            query = query.or_(f"external_post_id.eq.{external_post_id},external_post_id.eq.all")
+        else:
+            query = query.eq("external_post_id", "all")
+
+        res = query.order("created_at").execute()
 
         candidates = res.data or []
         for c in candidates:

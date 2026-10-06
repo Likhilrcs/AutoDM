@@ -1,33 +1,29 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsApi, UpdateSettingsRequest } from '@/services/settingsApi';
+import { userApi } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import {
   User,
-  Cpu,
   Shield,
-  Webhook,
   KeyRound,
-  Check,
-  Copy,
-  Sparkles,
   Save,
-  CheckCircle2,
   LogOut,
   Lock,
+  Trash2,
 } from 'lucide-react';
 
 export const Settings: React.FC = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'ai' | 'safety' | 'webhook' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'safety' | 'security'>('profile');
 
   // Form states
   const [name, setName] = useState('');
@@ -37,23 +33,18 @@ export const Settings: React.FC = () => {
   const [dailyDmLimit, setDailyDmLimit] = useState(250);
   const [fallbackToStatic, setFallbackToStatic] = useState(true);
 
-  // Playground state
-  const [testPrompt, setTestPrompt] = useState('Hey! Can you send me the free Notion template?');
-  const [testLink, setTestLink] = useState('https://autodm.dev/demo-guide');
-  const [testOutput, setTestOutput] = useState<string | null>(null);
-
   // Security password state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
-  const { data: settings, isLoading } = useQuery({
+  const { isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
       const res = await settingsApi.getSettings();
-      setName(res.profile.name || user?.user_metadata?.name || 'Maya Demo');
-      setBio(res.profile.bio || 'Creator & Educator · Automating IG engagement');
+      setName(res.profile.name || user?.user_metadata?.name || 'Creator');
+      setBio(res.profile.bio || 'Instagram Creator · Automating engagement & lead conversion');
       setTimezone(res.profile.timezone || 'UTC');
       setCooldownHours(res.safety.cooldown_hours || 24);
       setDailyDmLimit(res.safety.daily_dm_limit || 250);
@@ -73,14 +64,16 @@ export const Settings: React.FC = () => {
     },
   });
 
-  const testLlmMutation = useMutation({
-    mutationFn: () => settingsApi.testLlm(testPrompt, testLink),
-    onSuccess: (data) => {
-      setTestOutput(data.output);
-      toast.success(`Generated preview via ${data.provider} in ${data.latency_ms}ms`);
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => userApi.deleteAccount(),
+    onSuccess: async () => {
+      toast.success('Your account and all associated data have been permanently deleted.');
+      setIsConfirmDeleteOpen(false);
+      await signOut();
+      window.location.href = '/signup';
     },
     onError: (err: any) => {
-      toast.error(err.message || 'LLM generation failed.');
+      toast.error(err.message || 'Failed to delete account.');
     },
   });
 
@@ -121,18 +114,9 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(label);
-    toast.success(`${label} copied to clipboard!`);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
-
   const tabs = [
-    { id: 'profile', name: 'Profile & Workspace', icon: User },
-    { id: 'ai', name: 'AI & LLM Engine', icon: Cpu },
-    { id: 'safety', name: 'Safety & Guardrails', icon: Shield },
-    { id: 'webhook', name: 'Webhooks & Meta API', icon: Webhook },
+    { id: 'profile', name: 'Profile & Account', icon: User },
+    { id: 'safety', name: 'AutoDM & Anti-Spam', icon: Shield },
     { id: 'security', name: 'Security & Account', icon: KeyRound },
   ];
 
@@ -150,7 +134,7 @@ export const Settings: React.FC = () => {
       <div>
         <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Settings</h2>
         <p className="text-xs text-slate-500 mt-1">
-          Manage your creator profile, LangGraph AI configurations, safety guardrails, and Meta webhook credentials.
+          Manage your creator profile, AutoDM rate limits, anti-spam rules, and account security.
         </p>
       </div>
 
@@ -187,13 +171,13 @@ export const Settings: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-700 font-extrabold text-xl flex items-center justify-center border-2 border-indigo-200">
-                  {name.charAt(0).toUpperCase() || 'M'}
+                  {name.charAt(0).toUpperCase() || 'C'}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">{name || 'Maya Demo'}</h4>
+                  <h4 className="text-sm font-bold text-slate-900">{name || 'Creator'}</h4>
                   <p className="text-xs text-slate-500">{user?.email}</p>
                   <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
-                    Pro Creator Plan
+                    Active Account
                   </span>
                 </div>
               </div>
@@ -254,127 +238,13 @@ export const Settings: React.FC = () => {
         </form>
       )}
 
-      {/* Tab 2: AI & LLM Engine */}
-      {activeTab === 'ai' && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>LangGraph & LLM Configuration</CardTitle>
-                  <CardDescription>Groq-powered high-speed AI reply generator and intent gates.</CardDescription>
-                </div>
-                <Badge variant="active">Groq Active</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">
-                    Model
-                  </span>
-                  <span className="text-xs font-bold text-slate-900">llama-3.1-8b-instant</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">
-                    Latency Benchmark
-                  </span>
-                  <span className="text-xs font-bold text-emerald-600">~180ms inference</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">
-                    Deterministic Fallback
-                  </span>
-                  <span className="text-xs font-bold text-indigo-600">Enabled (PRD §23)</span>
-                </div>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white">
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-900">Static Fallback Guardrail</h5>
-                    <p className="text-[11px] text-slate-500">
-                      If Groq encounters rate-limiting or intent rejection, deliver configured static DM template.
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={fallbackToStatic}
-                    onChange={(e) => setFallbackToStatic(e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white">
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-900">Link Preservation Rule</h5>
-                    <p className="text-[11px] text-slate-500">
-                      Destination links are appended verbatim and guaranteed never to be halluncinated.
-                    </p>
-                  </div>
-                  <Badge variant="success">Enforced</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AI Reply Playground */}
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Generation Playground</CardTitle>
-              <CardDescription>Test the exact prompt format and output before publishing automations.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Sample Comment</label>
-                <input
-                  type="text"
-                  value={testPrompt}
-                  onChange={(e) => setTestPrompt(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Target Link URL</label>
-                <input
-                  type="url"
-                  value={testLink}
-                  onChange={(e) => setTestLink(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                />
-              </div>
-
-              {testOutput && (
-                <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-200/80 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-indigo-700 tracking-wider block">
-                    LLM Response Preview
-                  </span>
-                  <p className="text-xs text-slate-800 leading-relaxed font-sans">{testOutput}</p>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button
-                size="sm"
-                onClick={() => testLlmMutation.mutate()}
-                loading={testLlmMutation.isPending}
-                icon={<Sparkles className="w-4 h-4" />}
-              >
-                Generate Preview
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-
-      {/* Tab 3: Safety & Guardrails */}
+      {/* Tab 2: AutoDM & Anti-Spam Rules */}
       {activeTab === 'safety' && (
         <form onSubmit={handleSaveProfile} className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Rate Limits & Anti-Spam Guardrails</CardTitle>
-              <CardDescription>Protect your Instagram account reputation and adhere to Meta limits.</CardDescription>
+              <CardTitle>AutoDM Delivery & Anti-Spam Rules</CardTitle>
+              <CardDescription>Protect your Instagram account reputation and control message dispatch velocity.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -394,7 +264,7 @@ export const Settings: React.FC = () => {
                     <span className="text-xs text-slate-500 font-semibold">Hours</span>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Ignores repeated comments from the same follower within this window (PRD §26.1).
+                    Prevents spamming followers by ignoring repeated comments from the same user within this window.
                   </p>
                 </div>
 
@@ -414,116 +284,56 @@ export const Settings: React.FC = () => {
                     <span className="text-xs text-slate-500 font-semibold">DMs/day</span>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Daily ceiling to keep outbound volumes below Meta Instagram velocity triggers.
+                    Daily maximum outbound messages to protect account health and stay within Instagram limits.
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs font-bold text-slate-900">
-                    Unicode NFKC Whole-Word Matcher Enforced
-                  </span>
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-white">
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-900">Fallback Message Protection</h5>
+                    <p className="text-[11px] text-slate-500">
+                      If personalized AI messaging is unavailable, automatically deliver your configured static reply and link.
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={fallbackToStatic}
+                    onChange={(e) => setFallbackToStatic(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                  />
                 </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Comments are normalized using Unicode NFKC. Emojis and punctuations are collapsed, and triggers match exact whole-words to prevent false positives (e.g., keyword <code>"link"</code> will not trigger on <code>"blink"</code> or <code>"linkedin"</code>).
-                </p>
+
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-bold text-slate-900">
+                      Smart Whole-Word Trigger Protection Active
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    AutoDM matches full trigger keywords accurately (e.g., keyword <code>"link"</code> will trigger on <em>"send me the link"</em>, but will not falsely trigger on <em>"blink"</em> or <em>"linkedin"</em>).
+                  </p>
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-end">
               <Button type="submit" loading={updateMutation.isPending} icon={<Save className="w-4 h-4" />}>
-                Save Safety Rules
+                Save AutoDM Rules
               </Button>
             </CardFooter>
           </Card>
         </form>
       )}
 
-      {/* Tab 4: Webhooks & Meta API */}
-      {activeTab === 'webhook' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Webhook & Developer Credentials</CardTitle>
-            <CardDescription>Use these credentials to register the Instagram Webhook in Meta for Developers.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">Webhook Callback URL</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={settings?.webhook?.endpoint_url || 'https://recliner-filter-luxurious.ngrok-free.dev/api/v1/webhooks/instagram'}
-                  className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 select-all"
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    copyToClipboard(
-                      settings?.webhook?.endpoint_url || 'https://recliner-filter-luxurious.ngrok-free.dev/api/v1/webhooks/instagram',
-                      'Webhook URL'
-                    )
-                  }
-                  icon={
-                    copiedKey === 'Webhook URL' ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">Verify Token</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={settings?.webhook?.verify_token || 'autodm_meta_verify_secret_token'}
-                  className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 select-all"
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    copyToClipboard(
-                      settings?.webhook?.verify_token || 'autodm_meta_verify_secret_token',
-                      'Verify Token'
-                    )
-                  }
-                  icon={
-                    copiedKey === 'Verify Token' ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>HMAC Signature Verification: Enabled</span>
-              </span>
-              <span className="font-semibold text-emerald-600">Active</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tab 5: Security & Danger Zone */}
+      {/* Tab 3: Security & Account */}
       {activeTab === 'security' && (
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Change Password</CardTitle>
-              <CardDescription>Update your Supabase authentication password.</CardDescription>
+              <CardDescription>Update your account password.</CardDescription>
             </CardHeader>
             <form onSubmit={handlePasswordChange}>
               <CardContent className="space-y-4">
@@ -559,28 +369,72 @@ export const Settings: React.FC = () => {
             </form>
           </Card>
 
-          {/* Danger Zone */}
-          <Card className="border-rose-200 bg-rose-50/20">
+          {/* Session & Sign Out */}
+          <Card className="border-slate-200">
             <CardHeader>
-              <CardTitle className="text-rose-600">Danger Zone</CardTitle>
-              <CardDescription>Actions that affect your active sessions and local mock data.</CardDescription>
+              <CardTitle className="text-slate-900">Session &amp; Logout</CardTitle>
+              <CardDescription>Sign out of your active AutoDM creator session.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-xl border border-rose-200 bg-white">
+            <CardContent>
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-white">
                 <div>
-                  <h5 className="text-xs font-bold text-slate-900">Sign Out Everywhere</h5>
+                  <h5 className="text-xs font-bold text-slate-900">Sign Out of AutoDM</h5>
                   <p className="text-[11px] text-slate-500">
-                    Terminates all active JWT sessions on all connected devices.
+                    Safely log out of your creator account on this device.
                   </p>
                 </div>
-                <Button variant="danger" size="sm" onClick={() => signOut()} icon={<LogOut className="w-3.5 h-3.5" />}>
+                <Button variant="outline" size="sm" onClick={() => signOut()} icon={<LogOut className="w-3.5 h-3.5" />}>
                   Sign Out
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone: Delete Account */}
+          <Card className="border-rose-200 bg-rose-50/20">
+            <CardHeader>
+              <CardTitle className="text-rose-600 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Delete Account
+              </CardTitle>
+              <CardDescription>
+                Permanently delete your account and remove all personal data, automations, triggers, and message history from the database.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border border-rose-200 bg-white">
+                <div>
+                  <h5 className="text-xs font-bold text-slate-900">Permanently Delete Account</h5>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    This action will wipe all your automations, active triggers, messages, connected Instagram accounts, and logs from the database. This action cannot be undone.
+                  </p>
+                </div>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setIsConfirmDeleteOpen(true)}
+                  icon={<Trash2 className="w-4 h-4" />}
+                >
+                  Delete Account
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
+
+      {/* Confirmation Dialog for Delete Account */}
+      <ConfirmDialog
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={() => deleteAccountMutation.mutate()}
+        title="Permanently Delete Account?"
+        message="Are you sure you want to delete your account? All your automations, active triggers, messages, connected Instagram accounts, and activity logs will be permanently deleted from the database. This action cannot be undone."
+        confirmText="Yes, Delete My Account"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleteAccountMutation.isPending}
+      />
     </div>
   );
 };
