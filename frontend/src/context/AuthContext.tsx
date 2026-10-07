@@ -110,9 +110,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
   };
 
+  const getRedirectUrl = (path: string = '/dashboard') => {
+    const base = (import.meta.env.VITE_SITE_URL as string | undefined)?.trim() || window.location.origin;
+    return `${base.replace(/\/$/, '')}${path}`;
+  };
+
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: getRedirectUrl('/reset-password'),
     });
     return { error };
   };
@@ -121,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: getRedirectUrl('/dashboard'),
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
