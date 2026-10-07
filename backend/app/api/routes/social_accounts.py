@@ -132,7 +132,11 @@ async def list_social_accounts(current_user: dict = Depends(get_current_user)):
         return ApiResponse(data=[])
 
 @router.post("/connect", response_model=ApiResponse[ConnectAccountResponse])
-async def connect_social_account(payload: ConnectAccountRequest, current_user: dict = Depends(get_current_user)):
+async def connect_social_account(
+    payload: ConnectAccountRequest,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
     user_id = current_user["id"]
     client = get_supabase_client()
     if not client:
@@ -141,8 +145,12 @@ async def connect_social_account(payload: ConnectAccountRequest, current_user: d
     if not settings.SOCIAL_CLIENT_ID:
         raise AppError("CONFIG_ERROR", "Meta SOCIAL_CLIENT_ID is not configured.")
 
+    # Detect whether caller is local or cloud to redirect back seamlessly
+    req_origin = request.headers.get("origin") or request.headers.get("referer") or ""
+    origin_flag = "local" if ("localhost" in req_origin or "127.0.0.1" in req_origin) else "cloud"
+
     # Generate official Instagram OAuth URL for user to authenticate with their credentials
-    auth_url = instagram_service.get_authorization_url(user_id=user_id)
+    auth_url = instagram_service.get_authorization_url(user_id=user_id, origin_flag=origin_flag)
     return ApiResponse(data=ConnectAccountResponse(
         authorization_url=auth_url,
         mock=False
@@ -162,21 +170,27 @@ async def meta_oauth_redirect_callback(
     """
     logger.info(f"Received Meta OAuth callback. state={state}, error={error}")
 
+    # Determine redirect base URL (defaults to Cloudflare production)
+    frontend_base = getattr(settings, "FRONTEND_URL", "https://autodm-bv1.pages.dev").rstrip("/")
+    if state and "__orig_local" in state:
+        frontend_base = "http://localhost:5173"
+
     if error:
         err_msg = error_description or error or "Meta authorization was cancelled."
         logger.warning(f"Meta OAuth error received: {err_msg}")
-        return RedirectResponse(url=f"http://localhost:5173/social-accounts?error={err_msg}")
+        return RedirectResponse(url=f"{frontend_base}/social-accounts?error={err_msg}")
 
     if not code:
-        return RedirectResponse(url="http://localhost:5173/social-accounts?error=No+authorization+code+returned")
+        return RedirectResponse(url=f"{frontend_base}/social-accounts?error=No+authorization+code+returned")
 
     user_id = None
     if state and state.startswith("user_"):
-        user_id = state.replace("user_", "")
+        clean_state = state.split("__orig_")[0]
+        user_id = clean_state.replace("user_", "")
 
     client = get_supabase_client()
     if not client or not user_id:
-        return RedirectResponse(url="http://localhost:5173/social-accounts?error=missing_user_state")
+        return RedirectResponse(url=f"{frontend_base}/social-accounts?error=missing_user_state")
 
     try:
         # 1. Exchange code for 60-day token (strip #_ appended by Meta)
@@ -184,7 +198,7 @@ async def meta_oauth_redirect_callback(
         token_data = await instagram_service.exchange_code_for_token(clean_code)
         access_token = token_data.get("access_token")
         if not access_token:
-            return RedirectResponse(url="http://localhost:5173/social-accounts?error=failed_to_obtain_access_token")
+            return RedirectResponse(url=f"{frontend_base}/social-accounts?error=failed_to_obtain_access_token")
 
         # 2. Fetch user profile from Instagram Graph API
         profile = await instagram_service.get_user_profile(access_token)
@@ -258,10 +272,10 @@ async def meta_oauth_redirect_callback(
             logger.warning(f"Error syncing media in redirect callback: {e}")
 
         logger.info(f"Successfully connected Instagram account @{username} via Meta OAuth.")
-        return RedirectResponse(url=f"http://localhost:5173/social-accounts?connected=true&username={username}")
+        return RedirectResponse(url=f"{frontend_base}/social-accounts?connected=true&username={username}")
     except Exception as e:
         logger.error(f"Error handling Meta OAuth callback: {e}")
-        return RedirectResponse(url=f"http://localhost:5173/social-accounts?error={str(e)}")
+        return RedirectResponse(url=f"{frontend_base}/social-accounts?error={str(e)}")
 
 @router.post("/callback", response_model=ApiResponse[dict])
 async def meta_oauth_post_callback(

@@ -21,13 +21,15 @@ class InstagramService:
     GRAPH_BASE_URL = "https://graph.instagram.com"
     FB_GRAPH_BASE_URL = "https://graph.facebook.com"
 
-    def get_authorization_url(self, user_id: str, redirect_uri: Optional[str] = None) -> str:
+    def get_authorization_url(self, user_id: str, redirect_uri: Optional[str] = None, origin_flag: str = "cloud") -> str:
         """Generate official Meta Instagram OAuth authorization URL."""
         client_id = str(settings.SOCIAL_CLIENT_ID or "").strip()
         r_uri = str(redirect_uri or settings.SOCIAL_REDIRECT_URI or "").strip()
 
         # Scopes required for comment monitoring and direct messaging
         scopes = getattr(settings, "INSTAGRAM_SCOPES", "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments")
+
+        state_val = f"user_{user_id}__orig_{origin_flag}" if origin_flag else f"user_{user_id}"
 
         params = {
             "enable_fb_login": "0",
@@ -36,7 +38,7 @@ class InstagramService:
             "redirect_uri": r_uri,
             "response_type": "code",
             "scope": scopes,
-            "state": f"user_{user_id}",
+            "state": state_val,
         }
         return f"{self.OAUTH_URL}?{urlencode(params)}"
 

@@ -20,8 +20,9 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     SECRET_KEY: str = "change-me-to-a-secure-random-32-byte-string"
     TOKEN_ENCRYPTION_KEY: str = ""
-    CORS_ORIGINS: str = "http://localhost:5173,https://recliner-filter-luxurious.ngrok-free.dev,http://127.0.0.1:5173"
+    CORS_ORIGINS: str = "http://localhost:5173,https://recliner-filter-luxurious.ngrok-free.dev,http://127.0.0.1:5173,https://autodm-bv1.pages.dev"
     API_BASE_URL: str = "https://recliner-filter-luxurious.ngrok-free.dev"
+    FRONTEND_URL: str = "https://autodm-bv1.pages.dev"
 
     # --- Supabase ---
     SUPABASE_URL: str = ""
