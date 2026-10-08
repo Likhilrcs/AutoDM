@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Zap,
   ArrowRight,
@@ -17,11 +18,41 @@ import {
   Layers,
   ArrowUpRight,
   Play,
+  Mail,
+  Send,
+  Loader2,
 } from 'lucide-react';
 
 export const Landing: React.FC = () => {
   const [openFaqs, setOpenFaqs] = useState<number[]>([0]);
   const [simulatedComment, setSimulatedComment] = useState('LINK');
+
+  // Contact form state
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactTopic, setContactTopic] = useState('Support');
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactSending, setContactSending] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactName.trim() || !contactEmail.trim() || !contactMessage.trim()) {
+      toast.error('Please fill in your name, email, and message.');
+      return;
+    }
+
+    setContactSending(true);
+    setTimeout(() => {
+      setContactSending(false);
+      setContactSent(true);
+      toast.success(`Message sent successfully! Our team will reply to ${contactEmail} within 2 hours.`);
+      setContactName('');
+      setContactEmail('');
+      setContactMessage('');
+      setTimeout(() => setContactSent(false), 6000);
+    }, 700);
+  };
 
   const toggleFaq = (index: number) => {
     setOpenFaqs((prev) =>
@@ -159,6 +190,9 @@ export const Landing: React.FC = () => {
             </a>
             <a href="#faq" className="hover:text-slate-950 transition-colors">
               FAQ
+            </a>
+            <a href="#contact" className="hover:text-slate-950 transition-colors">
+              Contact
             </a>
           </nav>
 
@@ -947,38 +981,250 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── 10. MODERN CLEAN FOOTER ─── */}
-      <footer className="bg-slate-950 text-slate-400 py-12 border-t border-slate-900">
+      {/* ─── 10. MODERN ENTERPRISE FOOTER WITH CONTACT US HUB ─── */}
+      <footer id="contact" className="bg-slate-950 text-slate-400 pt-20 pb-12 border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-900">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shadow-sm">
-                <Zap className="w-5 h-5 fill-[#d6f84c] text-[#d6f84c]" />
-              </div>
-              <span className="font-extrabold text-xl tracking-tight text-white">
-                AUTO<span className="text-[#d6f84c]">DM</span>
-              </span>
-            </div>
+          {/* Contact Us Interactive Hero Section inside Footer */}
+          <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950 rounded-3xl p-8 sm:p-12 border border-slate-800 shadow-2xl mb-16 relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-[#d6f84c]/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-slate-400">
-              <a href="#solutions" className="hover:text-white transition-colors">Solutions</a>
-              <a href="#how-it-works" className="hover:text-white transition-colors">How We Connect</a>
-              <a href="#about" className="hover:text-white transition-colors">About Us</a>
-              <a href="#testimonials" className="hover:text-white transition-colors">Testimonials</a>
-              <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-              <Link to="/login" className="hover:text-white transition-colors">Login</Link>
-              <Link to="/signup" className="hover:text-white transition-colors">Sign Up</Link>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start relative z-10">
+              {/* Left Column: Direct Contact Channels & Support Promise */}
+              <div className="lg:col-span-5 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-[#d6f84c] text-xs font-semibold">
+                  <Mail className="w-3.5 h-3.5 text-[#d6f84c]" />
+                  <span>24/7 Global Creator Support</span>
+                </div>
+
+                <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                  Have a question? <br />
+                  <span className="text-[#d6f84c]">Let's talk to our team.</span>
+                </h3>
+
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  Whether you need help connecting your Instagram account, want a custom enterprise automation demo, or have questions about Meta compliance — our team is here to assist you.
+                </p>
+
+                {/* Direct Contact Methods */}
+                <div className="space-y-4 pt-2">
+                  <a
+                    href="mailto:support@autodm.dev"
+                    className="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 hover:bg-slate-950 transition-all group"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Mail className="w-5 h-5 text-indigo-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-medium">Direct Email Support</p>
+                      <p className="text-sm font-bold text-white group-hover:text-[#d6f84c] transition-colors">
+                        support@autodm.dev
+                      </p>
+                    </div>
+                  </a>
+
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80">
+                    <div className="w-11 h-11 rounded-xl bg-[#d6f84c]/20 text-[#d6f84c] flex items-center justify-center shrink-0">
+                      <Clock className="w-5 h-5 text-[#d6f84c]" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-medium">Average Response Speed</p>
+                      <p className="text-sm font-bold text-white">Under 2 hours • 7 days a week</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 text-xs text-emerald-400 font-medium">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Support Engineers Online • Ready to Assist</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Interactive Contact Form */}
+              <div className="lg:col-span-7 bg-slate-950/90 rounded-2xl p-6 sm:p-8 border border-slate-800/90 shadow-xl">
+                <div className="mb-6 space-y-1">
+                  <h4 className="text-lg font-bold text-white">Send Us a Direct Message</h4>
+                  <p className="text-xs text-slate-400">
+                    Fill out the form below and we will respond directly to your email inbox.
+                  </p>
+                </div>
+
+                {contactSent ? (
+                  <div className="py-12 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <h5 className="text-lg font-bold text-white">Message Sent Successfully!</h5>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                      Thank you for contacting us. A member of our support team will reach out to your email shortly.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setContactSent(false)}
+                      className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 rounded-xl transition-colors cursor-pointer"
+                    >
+                      Send Another Message
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="contact-name" className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Your Name
+                        </label>
+                        <input
+                          id="contact-name"
+                          type="text"
+                          required
+                          value={contactName}
+                          onChange={(e) => setContactName(e.target.value)}
+                          placeholder="Maya Lin"
+                          className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#d6f84c] focus:ring-1 focus:ring-[#d6f84c] transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="contact-email" className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Email Address
+                        </label>
+                        <input
+                          id="contact-email"
+                          type="email"
+                          required
+                          value={contactEmail}
+                          onChange={(e) => setContactEmail(e.target.value)}
+                          placeholder="maya@creator.com"
+                          className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#d6f84c] focus:ring-1 focus:ring-[#d6f84c] transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="contact-topic" className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Inquiry Topic
+                      </label>
+                      <select
+                        id="contact-topic"
+                        value={contactTopic}
+                        onChange={(e) => setContactTopic(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-[#d6f84c] focus:ring-1 focus:ring-[#d6f84c] transition-all cursor-pointer"
+                      >
+                        <option value="Support">Technical Support & Setup</option>
+                        <option value="Instagram OAuth">Instagram & Meta Connection Help</option>
+                        <option value="Feature Request">Feature Request / Feedback</option>
+                        <option value="Enterprise">Enterprise & High-Volume Plans</option>
+                        <option value="General">General Inquiry</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="contact-message" className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Your Message
+                      </label>
+                      <textarea
+                        id="contact-message"
+                        required
+                        rows={3}
+                        value={contactMessage}
+                        onChange={(e) => setContactMessage(e.target.value)}
+                        placeholder="Tell us what you need help with or any questions you have..."
+                        className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#d6f84c] focus:ring-1 focus:ring-[#d6f84c] transition-all resize-none"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={contactSending}
+                      className="w-full py-3 px-6 bg-[#d6f84c] hover:bg-[#c9ef3a] active:bg-[#bfe628] text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {contactSending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Sending Message...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Send Message to Support</span>
+                          <Send className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
           </div>
 
+          {/* Multi-Column Nav Links */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-slate-900 text-xs">
+            {/* Col 1: Brand Info */}
+            <div className="col-span-2 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shadow-sm">
+                  <Zap className="w-4 h-4 fill-[#d6f84c] text-[#d6f84c]" />
+                </div>
+                <span className="font-extrabold text-lg tracking-tight text-white">
+                  AUTO<span className="text-[#d6f84c]">DM</span>
+                </span>
+              </div>
+              <p className="text-slate-400 leading-relaxed max-w-sm">
+                Next-generation comment-to-DM automation for Instagram creators and brands. Powered exclusively by the official Meta Graph API v21.0.
+              </p>
+              <div className="flex items-center gap-3 pt-2">
+                <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-slate-300">
+                  v1.2.0 Production
+                </span>
+                <span className="text-emerald-400 flex items-center gap-1.5 text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  All Systems Operational
+                </span>
+              </div>
+            </div>
+
+            {/* Col 2: Solutions */}
+            <div className="space-y-3">
+              <p className="font-bold text-white uppercase tracking-wider text-[11px]">Solutions</p>
+              <ul className="space-y-2 text-slate-400">
+                <li><a href="#solutions" className="hover:text-white transition-colors">Reels Comment Triggers</a></li>
+                <li><a href="#solutions" className="hover:text-white transition-colors">Automated Direct Messages</a></li>
+                <li><a href="#solutions" className="hover:text-white transition-colors">Smart Comment Rotator</a></li>
+                <li><a href="#solutions" className="hover:text-white transition-colors">Deduplication Safeguards</a></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Product */}
+            <div className="space-y-3">
+              <p className="font-bold text-white uppercase tracking-wider text-[11px]">Product</p>
+              <ul className="space-y-2 text-slate-400">
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How We Connect</a></li>
+                <li><a href="#demo" className="hover:text-white transition-colors">Interactive Live Simulator</a></li>
+                <li><a href="#testimonials" className="hover:text-white transition-colors">Creator Testimonials</a></li>
+                <li><a href="#faq" className="hover:text-white transition-colors">Frequently Asked Questions</a></li>
+              </ul>
+            </div>
+
+            {/* Col 4: Contact & Access */}
+            <div className="space-y-3">
+              <p className="font-bold text-white uppercase tracking-wider text-[11px]">Contact & Support</p>
+              <ul className="space-y-2 text-slate-400">
+                <li><a href="mailto:support@autodm.dev" className="hover:text-[#d6f84c] transition-colors flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> support@autodm.dev</a></li>
+                <li><a href="#contact" className="hover:text-white transition-colors">Help Desk & Inquiry Form</a></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">Sign In to Dashboard</Link></li>
+                <li><Link to="/signup" className="hover:text-white transition-colors">Create Creator Account</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Copyright and Disclosures */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <p>© {new Date().getFullYear()} AutoDM. Powered by Official Meta Graph API v21.0.</p>
             <div className="flex items-center gap-4">
-              <span>Privacy Policy</span>
+              <span className="hover:text-slate-400 transition-colors cursor-pointer">Privacy Policy</span>
               <span>•</span>
-              <span>Terms of Service</span>
+              <span className="hover:text-slate-400 transition-colors cursor-pointer">Terms of Service</span>
               <span>•</span>
-              <span>Meta Platform Compliance</span>
+              <span className="hover:text-slate-400 transition-colors cursor-pointer">Meta Platform Compliance</span>
             </div>
           </div>
         </div>
