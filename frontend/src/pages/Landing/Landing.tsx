@@ -43,15 +43,44 @@ export const Landing: React.FC = () => {
     }
 
     setContactSending(true);
-    setTimeout(() => {
-      setContactSending(false);
-      setContactSent(true);
-      toast.success(`Message sent successfully! Our team will reply to ${contactEmail} within 2 hours.`);
+
+    const payload = {
+      name: contactName.trim(),
+      email: contactEmail.trim(),
+      topic: contactTopic,
+      message: contactMessage.trim(),
+      timestamp: new Date().toISOString(),
+    };
+
+    const SCRIPT_URL =
+      import.meta.env.VITE_APP_SCRIPT_URL ||
+      (import.meta.env as any).APP_SCRIPT ||
+      'https://script.google.com/macros/s/AKfycbx4dru7MjmiB93yeCvNCuvzCrmqk5TMy8EIjgNof8qTJ_AGabGrphLI2fA5B7BBwfI/exec';
+
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      // Reset inputs on success
       setContactName('');
       setContactEmail('');
+      setContactTopic('Support');
       setContactMessage('');
-      setTimeout(() => setContactSent(false), 6000);
-    }, 700);
+      setContactSent(true);
+      toast.success('Thank you! Your message has been sent and recorded. We will get back to you shortly.');
+      setTimeout(() => setContactSent(false), 7000);
+    } catch (err) {
+      console.error('Submission error:', err);
+      toast.error('Failed to submit inquiry. Please try again or email us directly.');
+    } finally {
+      setContactSending(false);
+    }
   };
 
   const toggleFaq = (index: number) => {
@@ -591,11 +620,10 @@ export const Landing: React.FC = () => {
               <button
                 key={word}
                 onClick={() => setSimulatedComment(word)}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  simulatedComment === word
+                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${simulatedComment === word
                     ? 'bg-slate-950 text-[#d6f84c] shadow-md scale-105'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
+                  }`}
               >
                 Comment "{word}"
               </button>
@@ -895,11 +923,10 @@ export const Landing: React.FC = () => {
               return (
                 <div
                   key={index}
-                  className={`rounded-3xl border transition-all duration-200 overflow-hidden ${
-                    isOpen
+                  className={`rounded-3xl border transition-all duration-200 overflow-hidden ${isOpen
                       ? 'bg-white border-slate-900 shadow-md ring-1 ring-slate-900'
                       : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300 hover:bg-white'
-                  }`}
+                    }`}
                 >
                   <button
                     type="button"
@@ -908,11 +935,10 @@ export const Landing: React.FC = () => {
                   >
                     <div className="flex items-start gap-3.5">
                       <span
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 transition-colors ${
-                          isOpen
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 transition-colors ${isOpen
                             ? 'bg-[#d6f84c] text-slate-950'
                             : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-                        }`}
+                          }`}
                       >
                         {index + 1}
                       </span>
@@ -921,11 +947,10 @@ export const Landing: React.FC = () => {
                       </span>
                     </div>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 ${
-                        isOpen
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 ${isOpen
                           ? 'bg-slate-900 text-white rotate-180'
                           : 'bg-white border border-slate-200 text-slate-500 group-hover:border-slate-400'
-                      }`}
+                        }`}
                     >
                       <ChevronDown className="w-4 h-4" />
                     </div>
@@ -1009,7 +1034,7 @@ export const Landing: React.FC = () => {
                 {/* Direct Contact Methods */}
                 <div className="space-y-4 pt-2">
                   <a
-                    href="mailto:support@autodm.dev"
+                    href="mailto:likhilbachanaboina219@gmail.com"
                     className="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 hover:bg-slate-950 transition-all group"
                   >
                     <div className="w-11 h-11 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -1018,7 +1043,7 @@ export const Landing: React.FC = () => {
                     <div>
                       <p className="text-xs text-slate-400 font-medium">Direct Email Support</p>
                       <p className="text-sm font-bold text-white group-hover:text-[#d6f84c] transition-colors">
-                        support@autodm.dev
+                        likhilbachanaboina219@gmail.com
                       </p>
                     </div>
                   </a>
@@ -1208,7 +1233,7 @@ export const Landing: React.FC = () => {
             <div className="space-y-3">
               <p className="font-bold text-white uppercase tracking-wider text-[11px]">Contact & Support</p>
               <ul className="space-y-2 text-slate-400">
-                <li><a href="mailto:support@autodm.dev" className="hover:text-[#d6f84c] transition-colors flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> support@autodm.dev</a></li>
+                <li><a href="mailto:likhilbachanaboina219@gmail.com" className="hover:text-[#d6f84c] transition-colors flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> likhilbachanaboina219@gmail.com</a></li>
                 <li><a href="#contact" className="hover:text-white transition-colors">Help Desk & Inquiry Form</a></li>
                 <li><Link to="/login" className="hover:text-white transition-colors">Sign In to Dashboard</Link></li>
                 <li><Link to="/signup" className="hover:text-white transition-colors">Create Creator Account</Link></li>
