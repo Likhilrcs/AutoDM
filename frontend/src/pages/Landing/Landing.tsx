@@ -5,7 +5,6 @@ import {
   Zap,
   ArrowRight,
   ShieldCheck,
-  Sparkles,
   CheckCircle2,
   Lock,
   Instagram,
@@ -14,9 +13,6 @@ import {
   ChevronDown,
   Star,
   Check,
-  TrendingUp,
-  Layers,
-  ArrowUpRight,
   Play,
   Mail,
   Send,
@@ -118,70 +114,84 @@ export const Landing: React.FC = () => {
 
   const testimonials = [
     {
-      name: 'Sarah Jenkins',
-      handle: '@sarah.fitcoach',
-      followers: '185k followers',
-      role: 'Fitness Coach & Author',
-      initials: 'SJ',
-      avatarColor: 'from-pink-500 to-rose-500',
-      stat: '+$24K Launch Revenue',
+      name: 'Olivia Richardson',
+      location: 'New York, USA',
+      handle: '@olivia.creative',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#ffd5c8]',
+      borderColor: 'border-[#ffbaa8]',
       quote:
-        'I had a Reel blow up to 1.8M views. In the past, I would spend days manually messaging people. With AutoDM, 14,000+ people got my workout PDF in under 2 seconds. Made $24k in 4 days!',
+        "I've tried multiple bot services, but nothing compares to the speed and reliability of AutoDM. Every Reel comment turns into a warm lead in seconds. Our launch revenue jumped $24K in four days!",
+    },
+    {
+      name: 'Sophia Mitchell',
+      location: 'London, UK',
+      handle: '@sophia.mitchell',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#fedbb0]',
+      borderColor: 'border-[#fcc58c]',
+      quote:
+        "As an educator, I appreciate the official Meta API integration. The automated DM delivers my course workbook right when follower interest is at its peak. It has become my go-to for every launch!",
+    },
+    {
+      name: 'Aisha Khan',
+      location: 'London, UK',
+      handle: '@aishakhan.art',
+      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#fee89e]',
+      borderColor: 'border-[#fed968]',
+      quote:
+        "I never knew converting Instagram comments could feel this organic! The public comment reply rotator keeps engagement natural, and zero shadowbans because it uses official Meta Graph API.",
+    },
+    {
+      name: 'Lucas Vance',
+      location: 'Sydney, Australia',
+      handle: '@lucas.growth',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#c3f6cb]',
+      borderColor: 'border-[#9ce8a9]',
+      quote:
+        "We run flash discount codes on Reels. Followers comment 'DISCOUNT' and receive their personalized code in DMs immediately. Our abandoned cart rate dropped by 42%!",
+    },
+    {
+      name: 'Emily Sanders',
+      location: 'Sydney, Australia',
+      handle: '@emilysanders.style',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#bee5ff]',
+      borderColor: 'border-[#97d3ff]',
+      quote:
+        "The variety of triggers is amazing! Whether I need comment-to-DM for pricing or instant ebook download delivery, this platform has it all. Highly recommend to any creator!",
+    },
+    {
+      name: 'Priya Deshmukh',
+      location: 'Mumbai, India',
+      handle: '@priyacodes',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#dfceff]',
+      borderColor: 'border-[#c7adff]',
+      quote:
+        "This tool has changed our daily business routine for the better! The detox from manual messaging is a relief, and the automated responses help us engage leads 24/7 with zero lag.",
+    },
+    {
+      name: 'Mia Lawrence',
+      location: 'Toronto, Canada',
+      handle: '@mialawrence.fit',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#ffbee2]',
+      borderColor: 'border-[#ff9fd3]',
+      quote:
+        "I'm obsessed with the speed! In the past, leads went cold waiting hours for links. Now they get the direct link in 1.2 seconds right on Instagram while excitement is at its peak.",
     },
     {
       name: 'Marcus Vance',
+      location: 'San Francisco, USA',
       handle: '@marcus.scale',
-      followers: '92k followers',
-      role: 'SaaS Founder & Creator',
-      initials: 'MV',
-      avatarColor: 'from-indigo-500 to-blue-600',
-      stat: '+310% Demo Bookings',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&auto=format&fit=crop&q=80',
+      bgColor: 'bg-[#c8f2d5]',
+      borderColor: 'border-[#a3e8ba]',
       quote:
-        "Our inbound demo bookings tripled. We tell people 'Comment DEMO for our private VIP walkthrough link'. The automation responds instantly while their interest is at peak. Absolute game changer.",
-    },
-    {
-      name: 'Elena Rostova',
-      handle: '@elena.creative',
-      followers: '340k followers',
-      role: 'Digital Artist & Educator',
-      initials: 'ER',
-      avatarColor: 'from-purple-500 to-violet-600',
-      stat: '1.2M Reel Reach',
-      quote:
-        'The public comment reply rotator is brilliant. It makes engagement look 100% natural and algorithmic reach went through the roof. Plus, zero risk of shadowbans because it uses official Meta APIs.',
-    },
-    {
-      name: 'Liam O’Connor',
-      handle: '@ecom.liam',
-      followers: '65k followers',
-      role: 'E-Commerce Founder',
-      initials: 'LO',
-      avatarColor: 'from-amber-500 to-orange-600',
-      stat: '-42% Abandoned Carts',
-      quote:
-        "We run flash discount codes on Reels. Followers comment 'DISCOUNT' and receive their personalized coupon code in DMs immediately. Our cart abandonment dropped by 42% in the first month.",
-    },
-    {
-      name: 'Priya Sharma',
-      handle: '@priyacodes',
-      followers: '210k followers',
-      role: 'Tech Creator & Mentor',
-      initials: 'PS',
-      avatarColor: 'from-emerald-500 to-teal-600',
-      stat: '18 hrs/wk Saved',
-      quote:
-        'The Google 1-click login and 2-minute setup blew me away. I connected my Instagram Business page and had my lead magnet automation running in under 3 minutes without touching a line of code.',
-    },
-    {
-      name: 'Julian Rivera',
-      handle: '@julian.realestate',
-      followers: '125k followers',
-      role: 'Real Estate Agency Director',
-      initials: 'JR',
-      avatarColor: 'from-blue-600 to-indigo-700',
-      stat: '48 Leads / Week',
-      quote:
-        "Our property listing brochures are delivered instantly when prospective buyers comment 'INFO'. We went from losing leads in messy comments to closed transactions. It paid for itself on day one.",
+        "Our inbound demo bookings tripled. We tell people 'Comment DEMO for VIP access'. The webhook responds in 0.4s and syncs seamlessly with our CRM. Absolute game changer!",
     },
   ];
 
@@ -202,17 +212,14 @@ export const Landing: React.FC = () => {
 
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <a href="#solutions" className="hover:text-slate-950 transition-colors">
-              Solutions
+            <a href="#about" className="hover:text-slate-950 transition-colors">
+              About Me
             </a>
             <a href="#how-it-works" className="hover:text-slate-950 transition-colors">
               How We Connect
             </a>
             <a href="#demo" className="hover:text-slate-950 transition-colors">
               Live Demo
-            </a>
-            <a href="#about" className="hover:text-slate-950 transition-colors">
-              About Us
             </a>
             <a href="#testimonials" className="hover:text-slate-950 transition-colors">
               Testimonials
@@ -274,7 +281,7 @@ export const Landing: React.FC = () => {
                   to="/signup"
                   className="inline-flex items-center justify-center gap-3 px-7 py-3.5 bg-[#d6f84c] hover:bg-[#c9ef3a] text-slate-950 rounded-full text-sm sm:text-base font-bold shadow-md shadow-lime-900/10 hover:shadow-lg transition-all group cursor-pointer"
                 >
-                  <span>Explore solutions</span>
+                  <span>Start Free Trial</span>
                   <div className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
                     <ArrowRight className="w-3.5 h-3.5 text-[#d6f84c]" />
                   </div>
@@ -321,276 +328,245 @@ export const Landing: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Side Showcase Image + Floating Glass Card (5 Cols) */}
+            {/* Right Side Showcase Phone Mockup + Floating Glass Cards (5 Cols) */}
             <div className="lg:col-span-5 relative flex justify-center">
-              {/* Creator Portrait Frame */}
-              <div className="relative w-full max-w-[420px] aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-100 border-4 border-white bg-slate-100">
+              {/* Phone Mockup Frame */}
+              <div className="relative w-full max-w-[420px] aspect-square sm:aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-100 border-4 border-white bg-slate-100 group">
                 <img
-                  src="/images/creator_hero.jpg"
-                  alt="AutoDM Creator"
-                  className="w-full h-full object-cover object-top"
+                  src="/images/ig_hero_phone.jpg"
+                  alt="AutoDM Instagram Automation Preview"
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
                 />
 
                 {/* Subtle soft gradient fade at bottom */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 via-transparent to-transparent pointer-events-none" />
               </div>
 
-              {/* Floating Glassmorphic Growth Card */}
-              <div className="absolute -bottom-6 -right-2 sm:-right-6 bg-white/85 backdrop-blur-xl rounded-3xl p-5 shadow-xl border border-white/80 max-w-[210px] space-y-2 animate-bounce-subtle">
-                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Growth overview
-                </p>
-                <p className="text-2xl font-extrabold text-slate-950">
-                  +38.4%
-                </p>
-                <p className="text-[10px] text-slate-500 font-medium">
-                  in this quarter
-                </p>
-
-                {/* Colorful Bar Chart Mockup */}
-                <div className="flex items-end gap-1.5 h-10 pt-2">
-                  <div className="w-2.5 h-4 rounded-full bg-blue-400" />
-                  <div className="w-2.5 h-6 rounded-full bg-indigo-500" />
-                  <div className="w-2.5 h-5 rounded-full bg-sky-400" />
-                  <div className="w-2.5 h-7 rounded-full bg-purple-500" />
-                  <div className="w-2.5 h-10 rounded-full bg-[#d6f84c]" />
-                  <div className="w-2.5 h-8 rounded-full bg-pink-500" />
+              {/* Floating Instagram Comment Trigger Badge (Top Left) */}
+              <div className="absolute -top-3 -left-3 sm:-left-8 bg-white/95 backdrop-blur-xl rounded-2xl p-3.5 shadow-xl border border-slate-100 flex items-center gap-3 max-w-[230px] animate-bounce-subtle">
+                <div className="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+                  <Instagram className="w-5 h-5" />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── 3. FIVE-CARD SIGNATURE FEATURE ROW (EXACT REFERENCE ROW) ─── */}
-          <div id="solutions" className="mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Card 1: AI Strategy */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900">AI Strategy</h3>
-                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold text-slate-900 truncate">@sarah_fit</p>
+                    <span className="text-[10px] text-slate-400">just now</span>
+                  </div>
+                  <p className="text-[11px] font-semibold text-indigo-600 truncate">
+                    "PRICE please? 🔥"
+                  </p>
                 </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1 mb-8">Roadmap to scale</p>
-              {/* Graphic curve preview */}
-              <div className="h-16 rounded-2xl bg-gradient-to-tr from-blue-500/10 to-indigo-500/20 flex items-center justify-center overflow-hidden">
-                <div className="w-24 h-12 border-4 border-indigo-400 rounded-t-full rotate-12 opacity-80" />
-              </div>
-            </div>
-
-            {/* Card 2: Data Intelligence */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900">Data intelligence</h3>
-                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1 mb-8">Turn data into actionable insights</p>
-              {/* Graphic 3D sphere preview */}
-              <div className="h-16 rounded-2xl bg-gradient-to-tr from-[#d6f84c]/20 to-emerald-500/20 flex items-center justify-center">
-                <div className="w-10 h-10 rounded-full bg-[#d6f84c] border-2 border-slate-900/20 shadow-inner flex items-center justify-center text-slate-950 font-bold text-xs">
-                  99%
-                </div>
-              </div>
-            </div>
-
-            {/* Card 3: Signature Dark Card ("Where comments meet strategy...") */}
-            <div className="bg-[#0f172a] text-white rounded-3xl p-6 border border-slate-800 shadow-xl flex flex-col justify-between group hover:border-slate-700 transition-all">
-              <div>
-                <div className="w-9 h-9 rounded-full bg-[#d6f84c] flex items-center justify-center mb-6">
-                  <Zap className="w-4 h-4 text-slate-950 fill-slate-950" />
-                </div>
-                <h3 className="text-base font-bold text-slate-100 leading-snug">
-                  Where data meets strategy,{' '}
-                  <span className="text-[#d6f84c]">transformation happens.</span>
-                </h3>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-4">
-                Automated Instagram lead generation
-              </p>
-            </div>
-
-            {/* Card 4: Project Estimate / Campaign Budget */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-medium">Project estimate</p>
-                <p className="text-2xl font-extrabold text-slate-950 mt-1">$42,800</p>
-                <p className="text-[10px] text-slate-400 mb-4">Estimated creator ROI</p>
               </div>
 
-              <div className="space-y-1.5 text-[11px] text-slate-600 border-t border-slate-100 pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    Discovery
-                  </span>
-                  <span className="font-bold text-slate-800">$4,500</span>
+              {/* Floating Automated DM Sent Badge (Bottom Right) */}
+              <div className="absolute -bottom-4 -right-3 sm:-right-8 bg-slate-950/95 text-white backdrop-blur-xl rounded-2xl p-3.5 shadow-2xl border border-slate-800 flex items-center gap-3 max-w-[240px]">
+                <div className="w-9 h-9 rounded-xl bg-[#d6f84c] text-slate-950 flex items-center justify-center shrink-0 font-bold">
+                  <Zap className="w-4 h-4 fill-slate-950 text-slate-950" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Analytics
-                  </span>
-                  <span className="font-bold text-slate-800">$10,000</span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold text-white">AutoDM Sent 🚀</p>
+                    <span className="text-[10px] text-[#d6f84c] font-semibold">0.4s</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 truncate">
+                    "Sent link + 20% discount!"
+                  </p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                    Implementation
-                  </span>
-                  <span className="font-bold text-slate-800">$18,300</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 5: Automation Card */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900">Automation</h3>
-                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1 mb-8">Smarter workflows, better outcomes</p>
-              {/* Graphic flower/ring preview */}
-              <div className="h-16 rounded-2xl bg-gradient-to-tr from-purple-500/10 to-pink-500/20 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-purple-600" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── 4. ABOUT SECTION (BENTO GRID FROM REFERENCE IMAGE) ─── */}
-      <section id="about" className="py-24 bg-white border-b border-slate-200/70">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Top Tag & Split Heading */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-16">
-            <div className="lg:col-span-7 space-y-3">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-                ABOUT US
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-950 tracking-tight leading-[1.15]">
-                A global partner focused on building{' '}
-                <span className="text-indigo-600">smarter</span> and more{' '}
-                <span className="text-purple-600">adaptive</span> businesses.
-              </h2>
-            </div>
+      {/* ─── 4. ABOUT ME SECTION (FOUNDER SHOWCASE) ─── */}
+      <section id="about" className="py-24 sm:py-32 bg-[#faf9f6] border-b border-slate-200/60 relative overflow-hidden">
+        {/* Subtle background ambient blur */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-amber-100/40 via-indigo-50/30 to-lime-100/30 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="lg:col-span-5 space-y-5 lg:pt-8">
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-                We combine deep industry expertise with cutting-edge AI and analytics to help creators move faster, operate smarter, and grow with absolute confidence.
-              </p>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center gap-2 text-sm font-bold text-slate-900 hover:text-indigo-600 transition-colors group"
-              >
-                <span>Learn more about us</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-8">
+          {/* Avatar with speech bubble pill badge matching reference */}
+          <div className="inline-block relative">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden shadow-xl ring-4 ring-white mx-auto bg-slate-100 group">
+              <img
+                src="/images/likhil.jpg"
+                alt="Likhil"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+            {/* Speech bubble badge matching reference */}
+            <div className="absolute -top-1 -right-6 sm:-right-8 bg-white px-3.5 py-1.5 rounded-full text-xs font-extrabold text-slate-800 shadow-lg border border-slate-200/80 flex items-center gap-1.5 animate-bounce-subtle">
+              <span>Likhil</span>
+              <span className="text-sm">👋</span>
             </div>
           </div>
 
-          {/* 4-Card Bento Grid (Matching Exact Reference Layout) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-            {/* Bento Card 1: Solutions 25+ */}
-            <div className="bg-slate-50/70 rounded-3xl p-8 border border-slate-200/80 flex flex-col justify-between hover:border-slate-300 transition-all">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-8">
-                <Layers className="w-5 h-5" />
+          {/* Main Headline from User */}
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-950 tracking-tight leading-[1.15]">
+              Hello, I'm <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">Likhil</span>.
+              <br />
+              I build AI agents and automation that move businesses forward.
+            </h2>
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto pt-2">
+              Passionate about building intelligent AI systems, real-time Meta Graph API automations, and scalable workflows that turn customer engagement into automatic revenue — without manual busywork.
+            </p>
+          </div>
+
+          {/* Redirect Button to User's Website */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="https://likhilcy.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              id="about-me-portfolio-btn"
+              className="px-8 py-4 bg-slate-950 hover:bg-slate-800 text-white rounded-full text-sm sm:text-base font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all inline-flex items-center gap-2.5 group cursor-pointer"
+            >
+              <span>Visit My Website</span>
+              <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">
+                <ArrowRight className="w-3.5 h-3.5 text-[#d6f84c]" />
               </div>
-              <div className="space-y-2">
-                <p className="text-xs text-slate-500 font-semibold">Solutions</p>
-                <p className="text-4xl font-extrabold text-slate-950">25+</p>
-                <p className="text-xs text-slate-600 leading-relaxed pt-2">
-                  End-to-end solutions tailored to your creator needs.
-                </p>
-              </div>
+            </a>
+          </div>
+
+          {/* Social / Skill Badges */}
+          <div className="pt-6 flex flex-wrap items-center justify-center gap-2.5 text-xs text-slate-500 font-medium">
+            <span className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-2xs">
+              🤖 AI Agents & LLMs
+            </span>
+            <span className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-2xs">
+              ⚡ Meta Graph API Automations
+            </span>
+            <span className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-2xs">
+              🚀 Full-Stack Engineering
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 4.5 REAL INSTAGRAM POSTS & COMMENT ENGAGEMENT SHOWCASE ─── */}
+      <section className="py-24 bg-white border-b border-slate-200/70 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-50 border border-pink-200/80 text-xs font-bold text-pink-700 uppercase tracking-wider">
+              <Instagram className="w-3.5 h-3.5" />
+              Real Instagram Post & Comment Flow
             </div>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-950 tracking-tight leading-tight">
+              Turn Reel Comments into Instant Sales & DMs
+            </h2>
+            <p className="text-slate-600 text-base sm:text-lg">
+              Instagram doesn't allow clickable links in comments. AutoDM detects comments like "PRICE" or "LINK" in 0.8 seconds and drops the checkout link directly into their DM inbox.
+            </p>
+          </div>
 
-            {/* Bento Card 2: Vibrant Neon Lime Card (98% Satisfaction) */}
-            <div className="bg-[#d6f84c] rounded-3xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
-              <div className="w-11 h-11 rounded-2xl bg-slate-950 text-white flex items-center justify-center mb-8">
-                <TrendingUp className="w-5 h-5 text-[#d6f84c]" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
+            {/* Showcase 1: Instagram Comments Stream */}
+            <div className="bg-[#fafbfc] rounded-[2.5rem] p-7 sm:p-10 border border-slate-200/80 flex flex-col justify-between shadow-xs hover:shadow-md transition-all group">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-full bg-pink-100 text-pink-700 text-xs font-bold tracking-wide">
+                    Step 1 · Comment Trigger
+                  </span>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Live Webhook Detection
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-slate-950">
+                    Viral Comments Captured in Sub-Second Speed
+                  </h3>
+                  <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                    When followers comment on your post or Reel, AutoDM catches the keyword and automatically posts a verified public reply to boost your video in the algorithm.
+                  </p>
+                </div>
+
+                {/* Smartphone Mockup Frame */}
+                <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-xl aspect-square max-w-[440px] mx-auto bg-slate-100">
+                  <img
+                    src="/images/ig_comments_stream.jpg"
+                    alt="Instagram Post Comments Stream"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                  />
+                  {/* Floating comment notification pill */}
+                  <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-lg border border-slate-200/80 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Instagram className="w-4 h-4 text-pink-600 shrink-0" />
+                      <span className="font-bold text-slate-900 truncate">1,452 Comments Processed</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      0.8s avg reply
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-3">
-                <p className="text-xs font-bold text-slate-900">Client satisfaction</p>
-                <p className="text-4xl font-extrabold text-slate-950">98%</p>
-                <p className="text-xs text-slate-800 leading-relaxed">
-                  Average satisfaction across all live projects.
-                </p>
 
-                {/* Face pile inside lime card */}
-                <div className="flex -space-x-2 pt-2">
-                  <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-[#d6f84c]">
-                    A
-                  </div>
-                  <div className="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-[#d6f84c]">
-                    B
-                  </div>
-                  <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-[#d6f84c]">
-                    C
-                  </div>
-                  <div className="w-7 h-7 rounded-full bg-slate-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-[#d6f84c]">
-                    D
-                  </div>
+              <div className="grid grid-cols-2 gap-3 pt-6 mt-6 border-t border-slate-200/70 text-xs">
+                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>Keyword Matching ("PRICE", "LINK")</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>Public Reply Rotator (Boosts Reach)</span>
                 </div>
               </div>
             </div>
 
-            {/* Bento Card 3: Modern Architecture with 150+ Overlay */}
-            <div className="relative rounded-3xl overflow-hidden min-h-[300px] border border-slate-200/80 shadow-xs group">
-              <img
-                src="/images/architecture_bento.jpg"
-                alt="Architecture"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
+            {/* Showcase 2: Direct Message Delivery */}
+            <div className="bg-[#fafbfc] rounded-[2.5rem] p-7 sm:p-10 border border-slate-200/80 flex flex-col justify-between shadow-xs hover:shadow-md transition-all group">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold tracking-wide">
+                    Step 2 · Instant DM Delivery
+                  </span>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+                    <Zap className="w-3.5 h-3.5 fill-indigo-600" />
+                    Direct Link In Inbox
+                  </div>
+                </div>
 
-              {/* Blue floating pill badge */}
-              <div className="absolute bottom-6 left-6 bg-blue-600 text-white rounded-2xl p-4 shadow-lg max-w-[140px]">
-                <p className="text-2xl font-extrabold">150+</p>
-                <p className="text-[10px] text-blue-100 font-medium leading-tight mt-0.5">
-                  Successful transformations
-                </p>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-slate-950">
+                    High-Converting Clickable Product Cards
+                  </h3>
+                  <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                    The follower instantly receives a personalized DM with high-converting rich cards, product pricing, and interactive buttons while their buying impulse is highest.
+                  </p>
+                </div>
+
+                {/* Smartphone Mockup Frame */}
+                <div className="relative rounded-3xl overflow-hidden border-4 border-white shadow-xl aspect-square max-w-[440px] mx-auto bg-slate-100">
+                  <img
+                    src="/images/ig_dm_chat.jpg"
+                    alt="Instagram Direct Message Delivery"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                  />
+                  {/* Floating DM notification pill */}
+                  <div className="absolute bottom-4 left-4 right-4 bg-slate-950/95 text-white backdrop-blur-md rounded-2xl p-3 shadow-lg border border-slate-800 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-[#d6f84c] shrink-0" />
+                      <span className="font-bold text-white truncate">Clickable Link Delivered</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-[#d6f84c] bg-lime-950/80 px-2 py-0.5 rounded-full border border-[#d6f84c]/30">
+                      100% Deliverability
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-6 mt-6 border-t border-slate-200/70 text-xs">
+                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Clickable Shopify / Gumroad Links</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Official Meta Graph API v21.0</span>
+                </div>
               </div>
             </div>
-
-            {/* Bento Card 4: Years of Experience 12+ */}
-            <div className="bg-slate-50/70 rounded-3xl p-8 border border-slate-200/80 flex flex-col justify-between hover:border-slate-300 transition-all">
-              <div className="w-11 h-11 rounded-2xl bg-slate-200/80 flex items-center justify-center text-slate-800 mb-8">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-slate-500 font-semibold">Years of experience</p>
-                <p className="text-4xl font-extrabold text-slate-950">12+</p>
-                <p className="text-xs text-slate-600 leading-relaxed pt-2">
-                  Helping creator businesses navigate change.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Partner Monochrome Logo Cloud */}
-          <div className="mt-16 pt-12 border-t border-slate-100 flex flex-wrap items-center justify-between gap-8 text-slate-400 font-bold text-sm tracking-wider uppercase">
-            <span className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-              ☁ Cloudix
-            </span>
-            <span className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-              ✔ Pulseway
-            </span>
-            <span className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-              ☍ DataVinci
-            </span>
-            <span className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-              ❉ SolidState
-            </span>
-            <span className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-              ⬡ Lightbox
-            </span>
-            <span className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-              ⚙ LayerOps
-            </span>
           </div>
         </div>
       </section>
@@ -822,70 +798,77 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── 7. TESTIMONIALS (INFINITE MARQUEE LEFT TO RIGHT) ─── */}
-      <section id="testimonials" className="py-24 bg-[#f4f7fe] relative overflow-hidden border-b border-slate-200/70">
+      {/* ─── 7. TESTIMONIALS (EXACT REFERENCE 2: PASTEL CARDS & DUAL MARQUEE) ─── */}
+      <section id="testimonials" className="py-24 bg-[#fafbfc] relative overflow-hidden border-b border-slate-200/70">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16 space-y-3">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#d6f84c]" />
             TESTIMONIALS
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-950 tracking-tight">
-            Loved by 2,000+ Creators Worldwide
+            What people are saying?
           </h2>
           <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto">
-            See how creators, coaches, and businesses turn comments into automated revenue.
+            Don't just take our word for it—see what our customers have to say about their experience!
           </p>
         </div>
 
-        {/* Marquee with left & right edge gradient masks */}
-        <div className="relative w-full overflow-hidden py-4 before:absolute before:left-0 before:top-0 before:z-20 before:h-full before:w-16 sm:before:w-36 before:bg-gradient-to-r before:from-[#f4f7fe] before:to-transparent before:pointer-events-none after:absolute after:right-0 after:top-0 after:z-20 after:h-full after:w-16 sm:after:w-36 after:bg-gradient-to-l after:from-[#f4f7fe] after:to-transparent after:pointer-events-none">
+        {/* Dual Marquee with left & right edge gradient masks */}
+        <div className="space-y-6 relative w-full overflow-hidden py-4 before:absolute before:left-0 before:top-0 before:z-20 before:h-full before:w-16 sm:before:w-36 before:bg-gradient-to-r before:from-[#fafbfc] before:to-transparent before:pointer-events-none after:absolute after:right-0 after:top-0 after:z-20 after:h-full after:w-16 sm:after:w-36 after:bg-gradient-to-l after:from-[#fafbfc] after:to-transparent after:pointer-events-none">
+          {/* Row 1: Left to Right Marquee */}
           <div className="animate-marquee-ltr flex gap-6 items-stretch">
-            {[...testimonials, ...testimonials].map((item, idx) => (
+            {[...testimonials.slice(0, 4), ...testimonials.slice(0, 4), ...testimonials.slice(0, 4)].map((item, idx) => (
               <div
                 key={idx}
-                className="w-[340px] sm:w-[400px] shrink-0 bg-white rounded-3xl p-7 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                className={`w-[320px] sm:w-[390px] shrink-0 ${item.bgColor} border ${item.borderColor} rounded-[2rem] p-7 sm:p-8 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group`}
               >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                    <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-[#d6f84c]/50 text-slate-950 border border-lime-300 whitespace-nowrap">
-                      {item.stat}
-                    </span>
-                  </div>
+                <p className="text-[14px] sm:text-[15px] text-slate-900 leading-relaxed font-normal mb-8">
+                  "{item.quote}"
+                </p>
 
-                  <p className="text-sm text-slate-700 leading-relaxed font-normal">
-                    "{item.quote}"
-                  </p>
+                <div className="flex items-center gap-3.5 pt-2">
+                  <img
+                    src={item.avatar}
+                    alt={item.name}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white/90 shadow-xs shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h4 className="text-sm sm:text-base font-bold text-slate-950 leading-tight">
+                      {item.name}
+                    </h4>
+                    <p className="text-xs text-slate-700/80 font-medium mt-0.5">
+                      {item.location}
+                    </p>
+                  </div>
                 </div>
+              </div>
+            ))}
+          </div>
 
-                <div className="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-10 h-10 rounded-full bg-gradient-to-tr ${item.avatarColor} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}
-                    >
-                      {item.initials}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-bold text-slate-900 truncate">
-                          {item.name}
-                        </p>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                      </div>
-                      <p className="text-xs text-indigo-600 font-semibold truncate">
-                        {item.handle}
-                      </p>
-                    </div>
-                  </div>
+          {/* Row 2: Right to Left Marquee */}
+          <div className="animate-marquee-rtl flex gap-6 items-stretch">
+            {[...testimonials.slice(4, 8), ...testimonials.slice(4, 8), ...testimonials.slice(4, 8)].map((item, idx) => (
+              <div
+                key={idx}
+                className={`w-[320px] sm:w-[390px] shrink-0 ${item.bgColor} border ${item.borderColor} rounded-[2rem] p-7 sm:p-8 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group`}
+              >
+                <p className="text-[14px] sm:text-[15px] text-slate-900 leading-relaxed font-normal mb-8">
+                  "{item.quote}"
+                </p>
 
-                  <div className="text-right shrink-0">
-                    <span className="text-[11px] text-slate-400 font-medium block">
-                      {item.followers}
-                    </span>
+                <div className="flex items-center gap-3.5 pt-2">
+                  <img
+                    src={item.avatar}
+                    alt={item.name}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white/90 shadow-xs shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h4 className="text-sm sm:text-base font-bold text-slate-950 leading-tight">
+                      {item.name}
+                    </h4>
+                    <p className="text-xs text-slate-700/80 font-medium mt-0.5">
+                      {item.location}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -896,7 +879,7 @@ export const Landing: React.FC = () => {
         <div className="text-center mt-10">
           <p className="text-xs font-semibold text-slate-400 flex items-center justify-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Hover over any card to pause • 100% Verified Instagram Creators
+            Hover over any card to pause • 100% Verified Real Creator Reviews
           </p>
         </div>
       </section>

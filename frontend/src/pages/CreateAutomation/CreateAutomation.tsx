@@ -44,7 +44,7 @@ export const CreateAutomation: React.FC = () => {
 
   // Form State
   const [socialAccountId, setSocialAccountId] = useState('');
-  const [name, setName] = useState('Instagram AutoDM');
+  const [name, setName] = useState('');
   const [selectedPostId, setSelectedPostId] = useState<string>('post_new_shoes');
   const [externalPostId, setExternalPostId] = useState('post_new_shoes');
   const [postUrl, setPostUrl] = useState('https://www.instagram.com/reel/DEMO456/');
@@ -73,29 +73,28 @@ export const CreateAutomation: React.FC = () => {
     }
   }, [connectedAccount]);
 
-  // Set default name and post when posts load
+  // Set default post when posts load (without overwriting automation name)
   useEffect(() => {
-    if (posts && posts.length > 0 && name === 'Instagram AutoDM') {
+    if (posts && posts.length > 0) {
       const defaultPost = posts.find((p) => p.external_post_id === 'post_new_shoes') || posts[0];
-      setSelectedPostId(defaultPost.external_post_id);
-      setExternalPostId(defaultPost.external_post_id);
-      setPostUrl(defaultPost.permalink || '');
-      setName(`${defaultPost.caption?.slice(0, 24) || 'New Post'} - AutoDM`);
+      if (defaultPost && !selectedPostId) {
+        setSelectedPostId(defaultPost.external_post_id);
+        setExternalPostId(defaultPost.external_post_id);
+        setPostUrl(defaultPost.permalink || '');
+      }
     }
-  }, [posts, name]);
+  }, [posts, selectedPostId]);
 
   const handleSelectPost = (post: PostItem) => {
     setSelectedPostId(post.external_post_id);
     setExternalPostId(post.external_post_id);
     setPostUrl(post.permalink || '');
-    setName(`${post.caption?.split(':')[0] || 'Instagram Post'} - AutoDM`);
   };
 
   const handleSelectAllPosts = () => {
     setSelectedPostId('all');
     setExternalPostId('all');
     setPostUrl('');
-    setName('Account-wide Comment AutoDM');
   };
 
   const validateStep1 = () => {
@@ -253,22 +252,20 @@ export const CreateAutomation: React.FC = () => {
           return (
             <div
               key={item.num}
-              className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all ${
-                isCurrent
+              className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all ${isCurrent
                   ? 'bg-white border-indigo-500 shadow-sm ring-1 ring-indigo-500'
                   : isComplete
-                  ? 'bg-slate-50 border-slate-200 text-slate-700'
-                  : 'bg-white/50 border-slate-200 text-slate-400'
-              }`}
+                    ? 'bg-slate-50 border-slate-200 text-slate-700'
+                    : 'bg-white/50 border-slate-200 text-slate-400'
+                }`}
             >
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
-                  isCurrent
+                className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${isCurrent
                     ? 'bg-indigo-600 text-white'
                     : isComplete
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-slate-100 text-slate-400'
-                }`}
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-slate-100 text-slate-400'
+                  }`}
               >
                 {isComplete ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
               </div>
@@ -307,8 +304,9 @@ export const CreateAutomation: React.FC = () => {
                 Automation Name
               </label>
               <input
+                id="automation-name-input"
                 type="text"
-                placeholder="e.g. New Shoes - Price AutoDM"
+                placeholder="e.g. Summer Promo DM, Price Inquiry AutoDM..."
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -331,11 +329,10 @@ export const CreateAutomation: React.FC = () => {
                   {/* Select All Posts Card */}
                   <div
                     onClick={handleSelectAllPosts}
-                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                      selectedPostId === 'all'
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${selectedPostId === 'all'
                         ? 'border-indigo-600 bg-indigo-50/40 shadow-sm'
                         : 'border-slate-200/80 hover:border-slate-300 bg-white'
-                    }`}
+                      }`}
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -362,11 +359,10 @@ export const CreateAutomation: React.FC = () => {
                       <div
                         key={post.id}
                         onClick={() => handleSelectPost(post)}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-3 ${
-                          isSelected
+                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-3 ${isSelected
                             ? 'border-indigo-600 bg-indigo-50/40 shadow-sm'
                             : 'border-slate-200/80 hover:border-slate-300 bg-white'
-                        }`}
+                          }`}
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -435,11 +431,10 @@ export const CreateAutomation: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div
                   onClick={() => setAutomationType('comment_to_dm')}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                    automationType === 'comment_to_dm'
+                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${automationType === 'comment_to_dm'
                       ? 'border-indigo-600 bg-indigo-50/40 shadow-sm'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
@@ -457,11 +452,10 @@ export const CreateAutomation: React.FC = () => {
 
                 <div
                   onClick={() => setAutomationType('dm_to_reply')}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                    automationType === 'dm_to_reply'
+                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${automationType === 'dm_to_reply'
                       ? 'border-indigo-600 bg-indigo-50/40 shadow-sm'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
@@ -609,21 +603,19 @@ export const CreateAutomation: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div
                     onClick={() => setReplyMode('static')}
-                    className={`p-3 rounded-xl border cursor-pointer text-xs font-bold transition-all ${
-                      replyMode === 'static'
+                    className={`p-3 rounded-xl border cursor-pointer text-xs font-bold transition-all ${replyMode === 'static'
                         ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700'
                         : 'border-slate-200 text-slate-600'
-                    }`}
+                      }`}
                   >
                     Static Template (Recommended)
                   </div>
                   <div
                     onClick={() => setReplyMode('ai')}
-                    className={`p-3 rounded-xl border cursor-pointer text-xs font-bold transition-all ${
-                      replyMode === 'ai'
+                    className={`p-3 rounded-xl border cursor-pointer text-xs font-bold transition-all ${replyMode === 'ai'
                         ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700'
                         : 'border-slate-200 text-slate-600'
-                    }`}
+                      }`}
                   >
                     AI Personalized (Groq)
                   </div>
